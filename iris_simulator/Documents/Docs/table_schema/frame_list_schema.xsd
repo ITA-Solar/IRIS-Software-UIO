@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="FRAMELIST">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Info" minOccurs="0" maxOccurs="1">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Time" type="xs:double"/>
+              <xs:element name="DataSize" type="xs:double"/>
+              <xs:element name="Description" type="xs:string"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="Header" minOccurs="1" maxOccurs="1">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Id" type="xs:string"/>
+              <xs:element name="Size" type="xs:integer"/>
+              <xs:element name="Entries" type="xs:integer"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="Data" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Tr" type="xs:integer"/>
+              <xs:element name="SJI" type="xs:string"/>
+              <xs:element name="NUV" type="xs:string"/>
+              <xs:element name="FUV" type="xs:string"/>
+              <xs:element name="SJI_AEC" type="xs:string"/>
+              <xs:element name="NUV_AEC" type="xs:string"/>
+              <xs:element name="FUV_AEC" type="xs:string"/>
+              <xs:element name="Flush" type="xs:integer"/>
+              <xs:element name="InhibitSkip" type="xs:integer"/>
+              <xs:element name="FW" type="xs:integer"/>
+              <xs:element name="Focus" type="xs:integer"/>
+              <xs:element name="PZTAOff" type="xs:integer"/>
+              <xs:element name="PZTBOff" type="xs:integer"/>
+              <xs:element name="PZTCOff" type="xs:integer"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

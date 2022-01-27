@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="OBS">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Info" minOccurs="0" maxOccurs="1">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Time" type="xs:double"/>
+              <xs:element name="DataSize" type="xs:double"/>
+              <xs:element name="Description" type="xs:string"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="Header" minOccurs="1" maxOccurs="1">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Id" type="xs:string"/>
+              <xs:element name="Size" type="xs:integer"/>
+              <xs:element name="Tr" type="xs:integer"/>
+              <xs:element name="Entries" type="xs:integer"/>
+              <xs:element name="Repeat" type="xs:integer"/>
+              <xs:element name="Cadence" type="xs:integer" minOccurs="0"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="Data" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Tr" type="xs:integer"/>
+              <xs:element name="FID" type="xs:string"/>
+              <xs:element name="Repeat" type="xs:integer"/>
+              <xs:element name="Flush" type="xs:integer"/>
+              <xs:element name="InhibitSkip" type="xs:integer"/>
+              <xs:element name="Tag" type="xs:string" minOccurs="0"/>
+              <xs:element name="Cadence" type="xs:integer" minOccurs="0"/>
+              <xs:element name="PZTA" type="xs:integer"/>
+              <xs:element name="PZTB" type="xs:integer"/>
+              <xs:element name="PZTC" type="xs:integer"/>
+              <xs:element name="PZTAStep" type="xs:integer"/>
+              <xs:element name="PZTBStep" type="xs:integer"/>
+              <xs:element name="PZTCStep" type="xs:integer"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

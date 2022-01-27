@@ -1,0 +1,1452 @@
+; 
+;+
+; NAME:
+;       IRIS_DATA__DEFINE
+;
+; PURPOSE:
+;       iris_data__define defines the class structure 'iris_data'.
+;
+; CATEGORY:
+;       IRIS Data analysis SW
+;
+; CALLING SEQUENCE:
+;       The IRIS_DATA__DEFINE procedure is not called directly. An
+;       object of class IRIS_DATA is created with the following
+;       statement:
+;                   iris_data = obj_new('iris_data')
+;
+; INPUTS:
+;
+; KEYWORD PARAMETERS:
+;
+; OUTPUTS:
+;       Objects of type IRIS_DATA which describes and contains 
+;       a level 2 IRIS raster
+;
+; CALLS:
+;
+; COMMON BLOCKS:
+;
+; PROCEDURE:
+;       The procedure opens an object of class IRIS_DATA. 
+;       This procedure includes various functions (methods of
+;       class  'iris_data' whose purpose is to get and/or manipulate
+;      the different fields of the object.
+;
+; RESTRICTIONS:
+;
+; MODIFICATION HISTORY:
+;       31-Dec-2012: Viggo Hansteen (based on EIS_HDR/DATA__DEFINE)
+;
+; $Id: iris_data__define.pro,v 1.78 2013/10/18 21:14:45 viggoh Exp $
+;
+;-
+function iris_data::init,file,verbose=verbose
+  self.title='IRIS'
+  self.xcen = 0.
+  self.ycen = 0.
+  self.default_sjiwin = -1
+  self.default_win = -1
+  self.aux=ptr_new(obj_new('iris_aux'))
+  self.cal=ptr_new(obj_new('iris_cal'))
+  if n_elements(file) ne 0 then begin
+    self->read,file,verbose=verbose
+  endif
+  return,1
+end
+
+pro iris_data::close
+  for i=0,self.nwin-1 do begin
+    if ptr_valid(self.w[i]) then ptr_free,self.w[i]
+  endfor
+  if self.lu ge 100 and self.lu le 128 then free_lun,self.lu
+end
+
+pro iris_data::cleanup
+  if ptr_valid(self.aux) then begin
+    obj_destroy,*self.aux
+    ptr_free,self.aux
+  endif
+  if ptr_valid(self.cal) then begin
+    obj_destroy,*self.cal
+    ptr_free,self.cal
+  endif
+  for i=0,self.nwin-1 do begin
+    ptr_free,self.w[i]
+    ptr_free,self.hdr[i]
+  endfor
+  for i=0,self.nfiles-1 do begin
+    ptr_free,self.aux_info[i].time
+    ptr_free,self.aux_info[i].pztx
+    ptr_free,self.aux_info[i].pzty
+    ptr_free,self.aux_info[i].exptimef
+    ptr_free,self.aux_info[i].exptimen
+    ptr_free,self.aux_info[i].sumsptrf
+    ptr_free,self.aux_info[i].sumsptrn
+    ptr_free,self.aux_info[i].sumspatf
+    ptr_free,self.aux_info[i].sumspatn
+    ptr_free,self.aux_info[i].dsrcf
+    ptr_free,self.aux_info[i].dsrcn
+    ptr_free,self.aux_info[i].lutidf
+    ptr_free,self.aux_info[i].lutidn
+    ptr_free,self.aux_info[i].xcen
+    ptr_free,self.aux_info[i].ycen
+    ptr_free,self.aux_info[i].obs_vr
+;
+    ptr_free,self.obs_info[i].frmid
+    ptr_free,self.obs_info[i].fdbidf
+    ptr_free,self.obs_info[i].fdbidn
+    ptr_free,self.obs_info[i].crsidf
+    ptr_free,self.obs_info[i].crsidn
+    ptr_free,self.obs_info[i].filef    
+    ptr_free,self.obs_info[i].filen    
+  endfor
+  free_lun,self.lu
+  return
+end
+
+function iris_data::getnfiles
+  return,self.nfiles
+end
+
+function iris_data::gettitle
+  return,self.title
+end
+
+function iris_data::getfilename
+  return, self.filename
+end
+
+function iris_data::getfilename_sji,lwin
+  if n_elements(lwin) eq 0 then lwin=self.default_sjiwin
+  return, self.filename_sji[lwin]
+end
+
+pro iris_data::setfilename,filename
+  self.filename=filename
+end
+
+function iris_data::getmapping,iwin
+  if n_params() eq 1 then return,(self.mapping)[iwin]
+  return,self.mapping
+end
+
+function iris_data::getcomment
+  return, self.comment
+end
+
+pro iris_data::setcomment,comment
+  self.comment=comment
+end
+
+function iris_data::getaux
+  return,*self.aux
+end
+
+function iris_data::getcal
+  return,*self.cal
+end
+
+function iris_data::missing
+  bscale=self->getinfo('BSCALE')
+  if datatype(bscale) eq 'INT'and bscale eq 0 then bscale=1.0
+  bzero=self->getinfo('BZERO')
+  return,bscale*((*self.cal)->missing())+bzero
+end
+
+pro iris_data::setnwin,nwin
+  self.nwin=nwin
+end
+
+function iris_data::getnwin
+  return,self.nwin
+end
+
+function iris_data::getnslit,iwin
+  nwin=self->getnwin()
+  if n_params() eq 0 then begin
+    return,round((self.naxis2)[0:nwin-1])
+  endif else begin
+    return,round(self.naxis2[iwin])
+  endelse
+end
+
+function iris_data::getnraster,iwin
+  nwin=self->getnwin()
+  if n_params() eq 0 or n_elements(iwin) eq 0 then begin
+    return,round((self.naxis3)[0:nwin-1])
+  endif else begin
+    return,round(self.naxis3[iwin])
+  endelse
+end
+
+function iris_data::getccd,region
+  if n_elements(region) eq 0 then begin
+     message,'no wavelength region given returning nuv size',/info
+     region='NUV'
+  endif
+  case strupcase(region) of
+  'NUV': return,(*self.cal->getnuv_sz())
+  'FUV': return,(*self.cal->getfuv_sz())
+  'FUV1': return,(*self.cal->getfuv1_sz())
+  'FUV2': return,(*self.cal->getfuv2_sz())
+  else: begin
+    message,region+' region does not exist',/info
+    return,-1
+        end
+  endcase
+end
+
+function iris_data::getccd_sz,region
+  return,*self.cal->getccd_sz(region)
+end
+
+function iris_data::getregion,iwin,full=full
+  nwin=self->getnwin()
+  if n_params() eq 0 then iwin=indgen(nwin)
+  if n_elements(full) eq 0 then full=0
+  region=self.region[iwin] ; was [self.mapping[iwin]]
+  if not full then return,strmid(region,0,3) else return,region
+end
+
+function iris_data::getsit_and_stare,iwin
+  if n_elements(iwin) eq 0 then iwin=self.default_win
+  if self->getfovx(iwin) lt (self->getresy(iwin))*2.1 then return,1 else return,0
+end
+
+function iris_data::binning_region,region
+  sumfuv=self->getinfo('SUMSPTRF') eq 0 ? 1:self->getinfo('SUMSPTRF')
+  sumnuv=self->getinfo('SUMSPTRN') eq 0 ? 1:self->getinfo('SUMSPTRN')
+  if self->getinfo('SUMSPTRL') ne 0 then begin
+    sumfuv=self->getinfo('SUMSPTRL')
+    sumnuv=self->getinfo('SUMSPTRL')
+  endif
+  case strmid(region,0,3) of
+    'FUV': return,sumfuv
+    'NUV': return,sumnuv
+    else: begin
+      message,'No such region '+region,/info
+      return,-1
+    endcase
+  endcase
+end
+
+function iris_data::binning_spectral,iwin
+  if n_elements(iwin) eq 0 then iwin=indgen(self->getnwin())
+  region=self->getregion(iwin) 
+  sumfuv=self->getinfo('SUMSPTRF') eq 0 ? 1:self->getinfo('SUMSPTRF')
+  sumnuv=self->getinfo('SUMSPTRN') eq 0 ? 1:self->getinfo('SUMSPTRN')
+  if self->getinfo('SUMSPTRL') ne 0 then begin
+    sumfuv=self->getinfo('SUMSPTRL')
+    sumnuv=self->getinfo('SUMSPTRL')
+  endif
+  sumsptrl=intarr(n_elements(iwin))
+  ind=where(region eq 'FUV',count)
+  if count gt 0 then sumsptrl[ind]=sumfuv
+  ind=where(region eq 'NUV',count)
+  if count gt 0 then sumsptrl[ind]=sumnuv
+  return,sumsptrl
+end
+
+function iris_data::scaling
+  iwin=0
+  if fxpar(self->gethdr(iwin),'O_BSCALE') ne 0 then begin
+    scaling=[fxpar(self->gethdr(iwin),'O_BSCALE'),fxpar(self->gethdr(iwin),'O_BZERO')]
+  endif else begin
+    scaling=[fxpar(self->gethdr(iwin),'BSCALE'),fxpar(self->gethdr(iwin),'BZERO')]
+    if scaling[0] eq 0 then scaling=[1.,0.]
+  endelse
+  return,scaling
+end
+
+function iris_data::getxytitle,axis
+  return,*self.aux->getxytitle(axis)
+end
+
+function iris_data::getvariablename
+  case datatype(self->getinfo('BTYPE')) of
+  'INT': return,*self.aux->getvariablename()
+  'STR': return,self->getinfo('BTYPE')
+  endcase
+end
+
+function iris_data::getvariableunit
+  case datatype(self->getinfo('BUNIT')) of
+  'INT': return,*self.aux->getvariableunit()
+  'STR': return,self->getinfo('BUNIT')
+  endcase
+end
+
+function iris_data::getdatatype,exten=exten
+  if n_elements(exten) eq 0 then exten=1
+  case self->getinfo('BITPIX',exten) of
+      8: return,'byte'
+     16: return,'int'
+    -32: return,'float'
+    -64: return,'double'
+    else: return,'float'
+  endcase
+end
+
+function iris_data::getmomentunits,moment
+  if n_params() eq 0 then return,*self.aux->getmomentunits() $ 
+  else return,*self.aux->getmomentunits(moment)
+end
+
+function iris_data::getmomentnames,moment
+  if n_params() eq 0 then return,*self.aux->getmomentnames() $ 
+  else return,*self.aux->getmomentnames(moment)
+end
+
+function iris_data::getaux_info,ifile
+  if n_elements(ifile) eq 0 then ifile=0
+  return,(self.aux_info[ifile])
+end
+
+function iris_data::aux_info,ifile
+  if n_elements(ifile) eq 0 then ifile=0
+  aux_inf={time:*(self.aux_info[ifile].time), $
+           pztx:*(self.aux_info[ifile].pztx), $
+           pzty:*(self.aux_info[ifile].pzty), $
+           exptimef:*(self.aux_info[ifile].exptimef), $
+           exptimen:*(self.aux_info[ifile].exptimen), $
+           sumsptrf:*(self.aux_info[ifile].sumsptrf), $
+           sumsptrn:*(self.aux_info[ifile].sumsptrn), $
+           sumspatf:*(self.aux_info[ifile].sumspatf), $
+           sumspatn:*(self.aux_info[ifile].sumspatn), $
+           dsrcf:*(self.aux_info[ifile].dsrcf), $
+           dsrcn:*(self.aux_info[ifile].dsrcn), $
+           lutidf:*(self.aux_info[ifile].lutidf), $
+           lutidn:*(self.aux_info[ifile].lutidn), $
+           xcen:*(self.aux_info[ifile].xcen), $
+           ycen:*(self.aux_info[ifile].ycen), $
+           obs_vr:*(self.aux_info[ifile].obs_vr) }
+  return,aux_inf
+end
+
+function iris_data::sji_info,lwin
+  if n_elements(lwin) eq 0 then lwin=self.default_sjiwin
+  sji_inf={time:*(self.sji_info[lwin].time), $
+           pztx:*(self.sji_info[lwin].pztx), $
+           pzty:*(self.sji_info[lwin].pzty), $
+           exptimes:*(self.sji_info[lwin].exptime), $
+           slit:*(self.sji_info[lwin].slit), $
+           sumsptrs:*(self.sji_info[lwin].sumsptrs), $
+           sumspats:*(self.sji_info[lwin].sumspats), $
+           dsrcs:*(self.sji_info[lwin].dsrcs), $
+           lutids:*(self.sji_info[lwin].lutids), $
+           xcen:*(self.sji_info[lwin].xcen), $
+           ycen:*(self.sji_info[lwin].ycen), $
+           obs_vr:*(self.sji_info[lwin].obs_vr) }
+  return,sji_inf
+end
+
+function iris_data::obs_info,ifile
+  if n_elements(ifile) eq 0 then ifile=0
+  obs_inf={frmid:*(self.obs_info[ifile].frmid), $
+           fdbidf:*(self.obs_info[ifile].fdbidf), $
+           crsidf:*(self.obs_info[ifile].crsidf), $
+           fdbidn:*(self.obs_info[ifile].fdbidn), $
+           crsidn:*(self.obs_info[ifile].crsidn), $
+           filef:*(self.obs_info[ifile].filef), $
+           filen:*(self.obs_info[ifile].filen)}
+  return,obs_inf
+end
+
+function iris_data::obs_info_sji,lwin
+  if n_elements(lwin) eq 0 then lwin=self.default_sjiwin
+  obs_inf={frmid:*(self.sjiobs_info[lwin].frmid), $
+           fdbids:*(self.sjiobs_info[lwin].fdbids), $
+           crsids:*(self.sjiobs_info[lwin].crsids), $
+           files:*(self.sjiobs_info[lwin].files)}
+  return,obs_inf
+end
+
+; window info, window data
+
+pro iris_data::show_lines
+  print,'Spectral regions(windows)'
+  for iwin=0,self->getnwin()-1 do begin
+    print,iwin,self->getline_wvl(iwin,wscale='AA'),self->getline_id(iwin),format='(i2,3x,f7.2,3x,a)'
+  endfor
+  if max(self->getread_sji()) eq 1 then print,'Loaded Slit Jaw images'
+  for lwin=0,5 do begin
+    if self->getread_sji(lwin) then begin
+      print,lwin,self->getsji_id(lwin),format='(i2,3x,a)'
+   endif
+  endfor
+  return
+end
+
+function iris_data::getpos,iwin
+  if n_elements(iwin) eq 0 then iwin=self.default_win
+  return,{xs:self->getxs(iwin),xw:self->getxw(iwin),ys:self->getys(iwin),yw:self->getyw(iwin)}
+end
+
+function iris_data::getxw,iwin
+  nwin=self->getnwin()
+  if n_params() eq 0 then begin
+    return,round((self.win_info.xw)[0:nwin-1])
+  endif else begin
+    return,round(self.win_info[iwin].xw)
+  endelse
+end
+
+function iris_data::getyw,iwin
+  nwin=self->getnwin()
+  if n_params() eq 0 then begin
+    return,(self.win_info.yw)[0:nwin-1]
+  endif else begin
+    return,self.win_info[iwin].yw
+  endelse
+end
+
+function iris_data::getxs,iwin
+  nwin=self->getnwin()
+  if n_params() eq 0 then begin
+    return,(self.win_info.xs)[0:nwin-1]
+  endif else begin
+    return,self.win_info[iwin].xs
+  endelse
+end
+
+function iris_data::getys,iwin
+  nwin=self->getnwin()
+  if n_params() eq 0 then begin
+    return,(self.win_info.ys)[0:nwin-1]
+  endif else begin
+    return,self.win_info[iwin].ys
+  endelse
+end
+
+pro iris_data::getwin,iwin,wd,pos,load=load
+; get window iwin, into wd, position pos on ccd
+  wd=self->getvar(iwin,load=load)
+  pos=[self->getxs(iwin), self->getxw(iwin), self->getys(iwin), self->getyw(iwin)]
+  return
+end
+
+function iris_data::getdefault_win
+  return,self.default_win
+end
+
+pro iris_data::setdebug,default_win
+  self.default_win=default_win
+end
+
+function iris_data::getvar,iwin,revnegdx=revnegdx,load=load
+  if n_elements(iwin) eq 0 then iwin=self.default_win
+  if n_elements(load) eq 0 then load=0
+  if n_elements(revnegdx) eq 0 then revnegdx=0
+  iwin=(self->getwindx(iwin))[0]
+  neg=0
+  if revnegdx and self->getdx(0,iwin=iwin) lt 0 then neg=1
+  if ptr_valid(self.w[iwin]) then begin
+    if load then begin
+      w=fltarr(self->getxw(iwin),self->getyw(iwin),self->getnraster(iwin))
+      if neg then begin
+        for i=0,self->getnraster(iwin)-1 do begin
+          w[*,*,i]=self->descale_array((*self.w[iwin])[*,*,self->getnraster(iwin)-1-i])
+        endfor
+        return,w
+      endif else begin
+        for i=0,self->getnraster(iwin)-1 do begin
+          w[*,*,i]=self->descale_array((*self.w[iwin])[*,*,i])
+        endfor
+        return,w
+      endelse
+    endif else return,*self.w[iwin] 
+  endif else return,-1
+end
+
+function iris_data::descale_array,var
+  bscale=self->getinfo('BSCALE')
+  if datatype(bscale) eq 'INT'and bscale eq 0 then bscale=1.0
+  bzero=self->getinfo('BZERO')
+  return,var*bscale+bzero
+end
+
+function iris_data::getposition,iwin
+  if n_elements(iwin) eq 0 then return,self.position
+  return,self.position[iwin+1]
+end
+
+function iris_data::datamin,iwin
+  if n_elements(iwin) eq 0 then tag='DATAP01' else tag='TDP01_'+strtrim(string(iwin+1),2)
+  dmin=self->getinfo(tag)
+  case datatype(dmin) of
+    'STR': begin
+       message,tag+' keyword set to NAN, setting datamin to 0',/info
+      return,0
+    endcase
+    else: return,dmin
+  endcase
+end
+
+function iris_data::getsji,iwin
+; extract sji data 
+  if n_elements(iwin) eq 0 then iwin=self.default_sjiwin
+  if ptr_valid(self.wsji[iwin]) then return,*self.wsji[iwin] else return,-1
+end
+
+function iris_data::getdata
+; extract entire object into structure
+  d=self->gethdr(/struct)
+  for iwin=0,self->getnwin()-1 do begin
+    d=boost_tag(temporary(d),self->getvar(iwin),'w'+strtrim(string(iwin,format='(i2)'),2))
+    d=boost_tag(temporary(d),self->getlam(iwin),'lam'+strtrim(string(iwin,format='(i2)'),2))
+    d=boost_tag(temporary(d),reform(self->getpztx(iwin)),'pztx'+strtrim(string(iwin,format='(i2)'),2))
+    d=boost_tag(temporary(d),reform(self->getpzty(iwin)),'pzty'+strtrim(string(iwin,format='(i2)'),2))
+    d=boost_tag(temporary(d),reform(self->getexp(iwin=iwin)),'exp'+strtrim(string(iwin,format='(i2)'),2))
+    d=boost_tag(temporary(d),reform(self->gettime(iwin)),'time'+strtrim(string(iwin,format='(i2)'),2))
+  endfor
+  return,d
+end
+
+function iris_data::getwindx,input
+  if n_params() eq 0 then begin
+    message,'getwindx,input',/info
+    return,-1
+  endif
+  iwin=intarr(n_elements(input))
+  for iw=0,n_elements(input)-1 do begin
+    if datatype(input[iw]) eq 'STR' then begin
+      iwin[iw]=(where((strupcase(self->getline_id())) eq $
+                       strupcase(input[iw]),c))[0]
+      if c eq 0 then begin
+        message,'Line_id not found : '+input[iw],/info
+        iwin[iw]=-1
+      endif
+    endif else begin
+      if input[iw] ge 0 and input[iw] le (self->getnwin())-1 then begin
+        iwin[iw]=input[iw]
+      endif else begin
+;   else e.g. input=1334.
+        nwin=self->getnwin()
+        winmax=fltarr(nwin)
+        winmin=fltarr(nwin)
+        for i=0,nwin-1 do begin 
+          winmax[i]=max(self->getlam(i))
+          winmin[i]=min(self->getlam(i))
+       endfor
+        prod=(winmax-input[iw])*(input[iw]-winmin)
+        iwin[iw]=(where(prod gt 0,c))[0]
+        if c eq 0 then begin
+          message,'wavelength not found '+trim(input[iw],'(f10.2)'),/info
+          iwin[iw]=-1
+        endif 
+      endelse
+    endelse
+  endfor
+  return,iwin
+end
+
+function iris_data::getline_id,iwin
+  nwin=self->getnwin()
+  if n_params() eq 0 then begin
+    return,(self.line_id)[0:nwin-1]
+  endif else begin
+    return,self.line_id[iwin]
+  endelse
+end
+
+; sji windows
+
+function iris_data::getsji_id,iwin
+  nwin=6
+  if n_params() eq 0 then begin
+    return,(self.sji_id)[0:nwin-1]
+  endif else begin
+    return,self.sji_id[iwin]
+  endelse
+end
+
+function iris_data::getxw_sji,iwin
+  nwin=6
+  if n_params() eq 0 then begin
+    return,(self.sji_info.xw)[0:nwin-1]
+  endif else begin
+    return,self.sji_info[iwin].xw
+  endelse
+end
+
+function iris_data::getyw_sji,iwin
+  nwin=6
+  if n_params() eq 0 then begin
+    return,(self.sji_info.yw)[0:nwin-1]
+  endif else begin
+    return,self.sji_info[iwin].yw
+  endelse
+end
+
+function iris_data::getxs_sji,iwin
+  nwin=6
+  if n_params() eq 0 then begin
+    return,(self.sji_info.xs)[0:nwin-1]
+  endif else begin
+    return,self.sji_info[iwin].xs
+  endelse
+end
+
+function iris_data::getys_sji,iwin
+  nwin=6
+  if n_params() eq 0 then begin
+    return,(self.sji_info.ys)[0:nwin-1]
+  endif else begin
+    return,self.sji_info[iwin].ys
+  endelse
+end
+
+function iris_data::getfilename_sji,lwin
+  if n_elements(lwin) eq 0 then lwin=self.default_sjiwin
+  return, self.filename_sji[lwin]
+end
+
+function iris_data::getslit_sji,lwin,indx,all=all
+  if n_elements(lwin) eq 0 then lwin=self.default_sjiwin
+  if n_elements(indx) eq 0 then begin
+    if keyword_set(all) then return,reform(*(self.sji_info.slit)[lwin]) else $
+                             return,(*(self.sji_info.slit)[lwin])[(self->locsji())[0]:(self->locsji())[1]]
+  endif else return,(*(self.sji_info.slit)[lwin])[indx]
+end
+
+function iris_data::getread_sji,lwin
+  if n_elements(lwin) eq 0 then return,self.sji_read else return,self.sji_read[lwin]
+end
+
+function iris_data::findiwin_sji,sji_id
+  case strupcase(strtrim(sji_id,2)) of
+    'SJI_1330': lwin=0
+    'SJI_1400': lwin=1
+    'SJI_2796': lwin=2
+    'SJI_2832': lwin=3
+    'SJI_1600W': lwin=4
+    'SJI_5000W': lwin=5
+    else: begin 
+      lwin=-1
+      message,'unknown SJI ID, returning -1'
+    endelse
+  endcase
+  return,lwin
+end
+
+function iris_data::locsji,lwin
+  if n_elements(lwin) eq 0 then lwin=self.default_sjiwin
+  return,reform(self.locsji[lwin,*])
+end
+
+function iris_data::getdefault_sjiwin
+  return,self.default_sjiwin
+end
+
+; find_slitpos0 and find_slitpos are probably not useful anymore...
+
+function iris_data::find_slitpos0,iwin
+  if n_elements(iwin) eq 0 then begin
+    message,'no slit jaw index given, assuming '+string(self.default_sjiwin,format='(I1)'),/info
+    iwin=self.default_sjiwin
+  endif
+  shift=-999.
+  for i=0,3 do begin
+    if self->getread_sji(i) then shift=max([shift,reform(self->getpztx_sji(i))])
+  endfor
+  case strmid(strupcase(strtrim(self->getsji_id(iwin),2)),0,5) of
+    'SJI_1': begin
+       slitxs0=((self->getcal())->getsji_slitpos()).fuv_xs0
+       slitys0=((self->getcal())->getsji_slitpos()).fuv_ys0
+       return,{xs0:slitxs0-(self->getxs_sji(iwin))-shift,ys0:(self->getys_sji(iwin))}
+           end
+    'SJI_2': begin
+       slitxs0=((self->getcal())->getsji_slitpos()).nuv_xs0
+       slitys0=((self->getcal())->getsji_slitpos()).nuv_ys0
+       return,{xs0:slitxs0-(self->getxs_sji(iwin))-shift,ys0:(self->getys_sji(iwin))}
+           end
+    else: begin
+       message,'SJI ID: '+strupcase(strtrim(self->getsji_id(iwin),2))+' is unknown, assuming FUV',/info
+       slitxs0=((self->getcal())->getsji_slitpos()).fuv_xs0
+       slitys0=((self->getcal())->getsji_slitpos()).fuv_ys0
+       return,{xs0:slitxs0-(self->getxs_sji(iwin))-shift,ys0:(self->getys_sji(iwin))}
+           end
+  endcase
+end
+
+function iris_data::find_slitpos,iwin,sjiwin=sjiwin,iexp=iexp,arcsec=arcsec
+  if n_elements(arcsec) eq 0 then arcsec=0
+  if n_elements(iexp) eq 0 then iexp=0
+  return,{xs:interpol(indgen(self->getnaxis1_sji(sjiwin)),self->xscale_sji(sjiwin),self->getxpos(iwin=iwin)), $
+          ys:intarr(self->getnraster(iwin))+self->getpzty(iwin)/self->getresy()}
+end
+
+; wavelength and wavelength coordinates
+
+function iris_data::getlam,iwin,wscale=wscale
+  if n_params() eq 0 then begin
+    message,'no window nr input',/info
+    iwin=-1
+  endif
+  if n_elements(wscale) eq 0 then wscale='AA'
+  iwin=(self->getwindx(iwin))[0]
+  if iwin eq -1 then return,-1
+  if wscale eq 'pixels' then begin
+    bin_sp=self->getinfo('SUMSPTRL')
+    return,1+(self->getxs(iwin)-1)*bin_sp+indgen(self->getxw(iwin)*bin_sp)
+  endif
+  crpix1=fxpar(self->gethdr(iwin+1),'crpix1')
+  cdelt1=fxpar(self->gethdr(iwin+1),'cdelt1')
+  crval1=fxpar(self->gethdr(iwin+1),'crval1')
+  naxis1=fxpar(self->gethdr(iwin+1),'naxis1')
+  if crval1 ne 0 then begin
+    return,crval1+(findgen(naxis1)+1.0-crpix1)*cdelt1
+  endif else begin ; use calibration object values
+    message,'CRVAL1 keyword not found, using calibration object values to compute lambda',/info
+    xs=(self->getxs())[iwin]-(self->getccd(self->getregion(iwin)))[0]
+    xw=(self->getxw())[iwin]
+    return,(self->getlambda(self->getregion(iwin),wscale='AA'))[xs:xs+xw-1]
+  endelse
+end
+
+pro iris_data::setline_wvl,iwin,lambda0
+  if n_params() ne 2 then begin
+    message,'d->setline_wvl,iwin,lambda0',/info
+    return
+  endif
+  self.line_wvl[iwin]=lambda0
+end
+
+function iris_data::getline_wvl,iwin,wscale=wscale
+  if n_elements(wscale) eq 0 then wscale='pixels'
+  if n_elements(iwin) eq 0 then begin
+    message,'result=d->getline_wvl(iwin,wscale={pixles (default),AA})',/info
+    return,-1
+  endif
+  lam0=self.line_wvl[iwin]
+  case wscale of 
+  'pixels': begin
+    pix=self->getlambda(self->getregion(iwin),wscale='pixels')
+    lam=self->getlambda(self->getregion(iwin),wscale='AA')
+    return,interpol(pix,lam,lam0)
+            end
+  'AA': return,lam0 
+  else: begin
+          message,'no such wscale',/info
+          return,-1
+        end
+  endcase
+end
+
+function iris_data::crwvl,iwin
+  if n_params() ne 1 then begin
+    message,'crvals=d->crwvl(iwin)',/info
+    return,-1
+  endif
+  crpix1=fxpar(self->gethdr(iwin+1),'crpix1')
+  cdelt1=fxpar(self->gethdr(iwin+1),'cdelt1')
+  crval1=fxpar(self->gethdr(iwin+1),'crval1')
+  return,{crpix1:crpix1,cdelt1:cdelt1,crval1:crval1}
+end
+
+function iris_data::getlambda,region,wscale=wscale
+  if n_params() lt 1 then begin
+    message,'region not given, assuming "FUV"',/info
+    region='FUV'
+  endif
+  if n_elements(wscale) eq 0 then wscale=(self->getaux())->getwscale()
+  bin_sp=self->binning_region(region)
+print,'binning',bin_sp
+  case region of
+  'FUV': begin
+     pixels1=(self->getcal())->pixels('FUV1')
+     pixels2=(self->getcal())->pixels('FUV2')
+     if wscale eq 'pixels' then return,[pixels1,pixels2]
+     lambda1=-1
+     iwin1=min(where(self->getregion(/full) eq 'FUV1'))
+     if iwin1 ne -1 then begin
+        s=self->crwvl(iwin1)
+        if s.crval1 ne 0 then begin
+          lambda1=s.crval1+(pixels1-(self->getxs(iwin1)+s.crpix1-1))*s.cdelt1/bin_sp
+        endif
+     endif
+     if lambda1[0] eq -1 then begin
+       message,'CRVAL1 keyword or window '+iwin2+'not found,',/info
+       message,'using calibration object values to compute lambda',/info
+       lambda1=(self->getcal())->lambda('FUV1')
+     endif
+     lambda2=-1
+     iwin2=min(where(self->getregion(/full) eq 'FUV2'))
+     if iwin2 ne -1 then begin
+        s=self->crwvl(iwin2)
+        if s.crval1 ne 0 then begin
+          lambda2=s.crval1+(pixels2-(self->getxs(iwin2)+s.crpix1-1))*s.cdelt1/bin_sp
+        endif
+     endif
+     if lambda2[0] eq -1 then begin
+       message,'CRVAL1 keyword or window '+string(iwin2)+' not found,',/info
+       message,'using calibration object values to compute lambda',/info
+       lambda2=(self->getcal())->lambda('FUV2')
+     endif
+     return,[lambda1,lambda2]
+  end
+  else: begin
+     pixels=(self->getcal())->pixels(region)
+     if wscale eq 'pixels' then return,pixels
+     lambda=-1
+     iwin=min(where(self->getregion(/full) eq region))
+     if iwin ne -1 then begin
+        s=self->crwvl(iwin)
+        if s.crval1 ne 0 then begin
+          lambda=s.crval1+(pixels-(self->getxs(iwin)+s.crpix1-1))*s.cdelt1/bin_sp
+        endif
+     endif
+     if lambda[0] eq -1 then begin
+       message,'CRVAL1 keyword or window '+iwin+'not found,',/info
+       message,'using calibration object values to compute lambda',/info
+       lambda=(self->getcal())->lambda(region)
+     endif
+     return,lambda
+  end
+  endcase
+end
+
+function iris_data::getdispersion,iwin,region=region
+  if n_params() lt 1 then begin
+    if n_elements(region) eq 0 then begin
+      message,'window or region not given, assuming "FUV1"',/info
+      region='FUV1'
+    endif
+  endif
+  if n_elements(iwin) ne 0 then region=self->getregion(iwin,/full)
+  disp=*self.cal->getdispersion()
+  case region of
+  'FUV1': dispersion=disp.dispfuv1
+  'FUV2': dispersion=disp.dispfuv2
+  'NUV' : dispersion=disp.dispnuv
+  endcase
+  return,dispersion
+end
+
+function iris_data::getwd_def
+  return,self.wd_def
+end
+
+pro iris_data::setline_px, iwin, var
+; define line position in window
+  self.wd_def[iwin].line_px = var
+  return
+end
+
+pro iris_data::setcont_px, iwin, var
+; define continuum position in window
+  self.wd_def[iwin].cont_px = var
+  return
+end
+
+function iris_data::getwscale
+  return,*self.aux->getwscale()
+end
+
+; fits headers 
+
+function iris_data::getinfo,tag,iwin,sji=sji
+  if keyword_set(sji) then begin
+    if n_elements(iwin) eq 0 then iwin=self.default_sjiwin
+    result = fxpar(self->gethdr_sji(iwin),tag)
+    if (tag eq 'OBS_DESC') && (size(result, /type) ne 7) then result = fxpar(self->gethdr_sji(iwin),'OBS_DEC')
+  endif else begin
+    if n_elements(iwin) eq 0 then iwin=0
+    result = fxpar(self->gethdr(iwin),tag)
+    if (tag eq 'OBS_DESC') && (size(result, /type) ne 7) then result = fxpar(self->gethdr(iwin),'OBS_DEC')
+  endelse
+  return,result
+end
+
+function iris_data::gethdr,iwin,struct=struct
+  if n_elements(iwin) eq 0 then iwin=0
+  if n_elements(struct) eq 0 then struct=0
+  if struct then return,fitshead2struct(*self.hdr[iwin]) else return,*self.hdr[iwin]
+end
+
+function iris_data::getnaxis1,iwin
+  if n_elements(iwin) eq 0 then iwin=self.default_win
+  return,fxpar(self->gethdr(iwin+1),'NAXIS1')
+end
+
+function iris_data::getnaxis2,iwin
+  if n_elements(iwin) eq 0 then iwin=self.default_win
+  return,fxpar(self->gethdr(iwin+1),'NAXIS2')
+end
+
+function iris_data::gethdr_sji,iwin,struct=struct
+  if n_elements(iwin) eq 0 then iwin=self.default_sjiwin
+  if n_elements(struct) eq 0 then struct=0
+  if struct then return,fitshead2struct(*self.hdrsji[iwin[0]]) else return,*self.hdrsji[iwin[0]]
+end
+
+function iris_data::getnaxis1_sji,iwin
+  if n_elements(iwin) eq 0 then iwin=self.default_sjiwin
+  return,self.naxis1sji[iwin]
+end
+
+function iris_data::getnaxis2_sji,iwin
+  if n_elements(iwin) eq 0 then iwin=self.default_sjiwin
+  return,self.naxis2sji[iwin]
+end
+
+function iris_data::getcrsid,iwin
+  return,''
+end
+
+function iris_data::getobsid,iwin
+  return,gt_tagval(self->gethdr(iwin),'OBSID',missing='OBSID tag missing!')
+end
+
+function iris_data::getfdbid,iwin
+  return,''
+end
+
+; positions and spatial coordinates
+
+function iris_data::getxpos,indx,iwin=iwin
+  if n_elements(iwin) eq 0 then iwin=self.default_win
+  if n_elements(indx) eq 0 then return,reform(self->getxcen(iwin)+self->getpztx(iwin))
+  return,reform(self->getxcen(0)+(self->getpztx(iwin))[indx])
+end
+
+function iris_data::getypos,iwin
+  if n_params() eq 0 then iwin=self.default_win
+  cdelt2=fxpar(self->gethdr(iwin+1),'CDELT2')
+  crval2=fxpar(self->gethdr(iwin+1),'CRVAL2')
+  crpix2=fxpar(self->gethdr(iwin+1),'CRPIX2')
+  return,crval2+(findgen(self->getnaxis2(iwin))+1.0-crpix2)*cdelt2
+end
+
+function iris_data::getxcen,iwin
+  self.xcen=fxpar(self->gethdr(0),'XCEN')
+  return,self.xcen
+end
+
+function iris_data::getycen,iwin
+  self.ycen=fxpar(self->gethdr(0),'YCEN')
+  return,self.ycen
+end
+
+function iris_data::getfovx_sji,lwin
+  if n_elements(lwin) eq 0 then lwin=self.default_sjiwin
+  return,max(self->xscale_sji(lwin))-min(self->xscale_sji(lwin))
+end
+
+function iris_data::getfovy_sji,lwin
+  if n_elements(lwin) eq 0 then lwin=self.default_sjiwin
+  return,max(self->yscale_sji(lwin))-min(self->yscale_sji(lwin))
+end
+
+function iris_data::xscale_sji,lwin
+  if n_elements(lwin) eq 0 then lwin=self.default_sjiwin
+  cdelt1=fxpar(self->gethdr_sji(lwin),'CDELT1')
+  crval1=fxpar(self->gethdr_sji(lwin),'CRVAL1')
+  crpix1=fxpar(self->gethdr_sji(lwin),'CRPIX1')
+  return,crval1+(findgen(self->getnaxis1_sji(lwin))+1.0-crpix1)*cdelt1
+end
+
+function iris_data::yscale_sji,lwin
+  if n_elements(lwin) eq 0 then lwin=self.default_sjiwin
+  cdelt2=fxpar(self->gethdr_sji(lwin),'CDELT2')
+  crval2=fxpar(self->gethdr_sji(lwin),'CRVAL2')
+  crpix2=fxpar(self->gethdr_sji(lwin),'CRPIX2')
+  return,crval2+(findgen(self->getnaxis2_sji(lwin))+1.0-crpix2)*cdelt2
+end
+
+function iris_data::getxcen_sji,lwin
+  if n_elements(lwin) eq 0 then lwin=self.default_sjiwin
+  return,fxpar(self->gethdr_sji(lwin),'XCEN')
+end
+
+function iris_data::getycen_sji,lwin
+  if n_elements(lwin) eq 0 then lwin=self.default_sjiwin
+  return,fxpar(self->gethdr_sji(lwin),'YCEN')
+end
+
+function iris_data::getfovx,iwin
+  if n_params() eq 0 then iwin=self.default_win
+  return,max(self->getpztx(self.mapping[iwin]))-min(self->getpztx(self.mapping[iwin]))
+end
+
+function iris_data::getfovy,iwin
+  if n_params() eq 0 then begin
+    return,self->getyw()*self->getresy()
+  endif else begin
+    return,self.getyw(iwin)*self->getresy()
+  endelse
+end
+
+function iris_data::getresy,iwin
+  if n_elements(iwin) eq 0 then iwin=self.default_win
+  lwin=iwin+1
+  cdelt2=fxpar(self->gethdr(lwin),'CDELT2')
+  if cdelt2 eq 0 then begin
+    message,'No cdelt2 found in header, using default resolution',/info
+    return,*(self.cal)->getresy()
+  endif
+  return,cdelt2
+end
+
+function iris_data::getdx,istep,iwin=iwin
+  if n_elements(iwin) eq 0 then iwin=self.default_win
+  m=self.mapping[iwin]
+  nraster=self->getnraster(iwin)
+  dx=shift((*self.aux_info[m].pztx),-1)-(*self.aux_info[m].pztx)
+  dx[nraster-1]=dx[nraster-2]
+  if n_params() gt 0 then return,dx[istep] else return,dx
+end
+
+function iris_data::getresx_sji,iwin
+  if n_elements(iwin) eq 0 then iwin=self.default_sjiwin
+  cdelt1=fxpar(self->gethdr_sji(iwin),'CDELT1')
+  if cdelt1 eq 0 then begin
+    message,'No cdelt1 found in header, using default resolution',/info
+    ib=where(self->getsji_id(iwin) eq (self->getcal())->getid())
+    return,*(self.cal)->getresx(ib)
+  endif
+  return,cdelt1
+end
+
+function iris_data::getresy_sji,iwin
+  if n_elements(iwin) eq 0 then iwin=self.default_sjiwin
+  cdelt2=fxpar(self->gethdr_sji(iwin),'CDELT2')
+  if cdelt2 eq 0 then begin
+    message,'No cdelt2 found in header, using default resolution',/info
+    return,*(self.cal)->getresy()
+  endif
+  return,cdelt2
+end
+
+function iris_data::getpztx,iwin,indx
+  if n_elements(iwin) eq 0 then iwin=self.default_win
+  if n_elements(indx) eq 0 then return,*(self.aux_info.pztx)[self.mapping[iwin]] $
+  else return,(*(self.aux_info.pztx)[self.mapping[iwin]])[indx]
+end
+
+function iris_data::getpztx_sji,lwin,indx,all=all
+  if n_elements(lwin) eq 0 then lwin=self.default_sjiwin
+  if n_elements(indx) eq 0 then begin
+    if keyword_set(all) then return,reform(*(self.sji_info.pztx)[lwin]) else $
+                             return,(*(self.sji_info.pztx)[lwin])[(self->locsji())[0]:(self->locsji())[1]]
+  endif else return,(*(self.sji_info.pztx)[lwin])[indx]
+end
+
+function iris_data::getpzty,iwin,indx
+  if n_elements(iwin) eq 0 then iwin=self.default_win
+  if n_elements(indx) eq 0 then return,reform(*(self.aux_info.pzty)[self.mapping[iwin]]) $
+  else return,(*(self.aux_info.pzty)[self.mapping[iwin]])[indx]
+end
+
+function iris_data::getpzty_sji,lwin,indx,all=all
+  if n_elements(lwin) eq 0 then lwin=self.default_sjiwin
+  if n_elements(indx) eq 0 then begin
+    if keyword_set(all) then return,reform(*(self.sji_info.pzty)[lwin]) else $
+                             return,(*(self.sji_info.pzty)[lwin])[(self->locsji())[0]:(self->locsji())[1]]
+  endif else return,(*(self.sji_info.pzty)[lwin])[indx]
+end
+
+; time and temporal coordinates
+
+function iris_data::getnexp,iwin
+  return,self->getnraster(iwin)
+end
+
+function iris_data::getnexp_sji,iwin
+  if n_elements(iwin) eq 0 then return,self.nexpsji[self.default_sjiwin] else return,self.nexpsji[iwin]
+end
+
+function iris_data::getnexp_prp,iwin
+  return,1 ; number of exposures per raster position, so far set to 1
+end
+
+function iris_data::getntime,iwin
+  return,self->getnraster(iwin)
+end
+
+function iris_data::getexp,iexp,iwin=iwin
+  if n_elements(iwin) eq 0 then iwin=self.default_win
+  m=self.mapping[iwin]
+  case self->getregion(iwin) of
+  'FUV': exp=*self.aux_info[m].exptimef
+  'NUV': exp=*self.aux_info[m].exptimen
+  else: begin
+    message,'unknown region '+self->getregion(iwin),/info
+    return,-1
+        end
+  endcase
+  if n_elements(iexp) ne 0 then return,exp[iexp] else return,exp
+end
+
+function iris_data::getexp_sji,lwin,indx,all=all
+  if n_elements(lwin) eq 0 then lwin=self.default_sjiwin
+  if n_elements(indx) eq 0 then begin
+    if keyword_set(all) then return,reform(*(self.sji_info.exptime)[lwin]) else $
+                             return,(*(self.sji_info.exptime)[lwin])[(self->locsji())[0]:(self->locsji())[1]]
+  endif else return,(*(self.sji_info.exptime)[lwin])[indx]
+end
+
+function iris_data::getdate_obs
+  return,self->getinfo('DATE_OBS')
+end
+
+function iris_data::getstartobs
+  return,self->getinfo('STARTOBS')
+end
+
+function iris_data::ti2tai,ti
+  if n_elements(ti) eq 0 then ti=self->gettime()
+  return,anytim2tai(self->getstartobs())+self->sec_from_obs_start(ti)
+end
+
+function iris_data::ti2utc,ti,time_only=time_only
+  if n_elements(ti) eq 0 then ti=self->gettime()
+  return,anytim2utc(self->ti2tai(ti),time_only=time_only,/ccsds,/truncate)
+end
+
+function iris_data::gettime,iwin,indx
+  if n_elements(iwin) eq 0 then iwin=self.default_win
+  if n_elements(indx) eq 0 then return,*(self.aux_info.time)[self.mapping[iwin]] $
+  else return,(*(self.aux_info.time)[self.mapping[iwin]])[indx]
+end
+
+function iris_data::getti_1,iwin,indx
+  return,self->gettime(iwin,indx)
+end
+
+function iris_data::getti_2,iwin,indx
+  return,self->gettime(iwin,indx)+self->getexp(indx,iwin=iwin)
+end
+
+function iris_data::sec_from_obs_start,ti
+  return,ti
+end
+
+function iris_data::gettime_sji,lwin,indx,all=all
+  if n_elements(lwin) eq 0 then lwin=self.default_sjiwin
+  if n_elements(indx) eq 0 then begin
+    if keyword_set(all) then return,reform(*(self.sji_info.time)[lwin]) else $
+                             return,(*(self.sji_info.time)[lwin])[(self->locsji())[0]:(self->locsji())[1]]
+  endif else return,(*(self.sji_info.time)[lwin])[indx]
+end
+
+; i/o and related methods for loading data
+
+pro iris_data::read,file,sjfile=sjfile,verbose=verbose
+  if n_params() eq 0 then begin
+    message,'iris_data->read,file1, file2, sjfile=sjfile',/info
+    return
+  end
+  if n_elements(verbose) eq 0 then silent=1 else silent=0
+  nfiles=n_elements(file)
+  f = nfiles eq 1 ? [file]:file
+  self.nfiles=nfiles
+  self.filename=file[0]
+  self.sji_read=0
+  self->close
+  for ifile=0,nfiles-1 do begin
+    self.file[ifile]=f[ifile]
+    if not (file_info(f[ifile])).exists then begin
+      message,'file '+f[ifile]+' does not exist, ignoring it',/info
+      break
+    endif
+; read first extension of each file, determine number of windows etc
+    d=readfits(f[ifile],hdr,exten_no=0,silent=silent)
+; say whether window is NUV, FUV, or SJI
+    region=strtrim(strupcase(fxpar(hdr,'TDET1')),2) ; was CCDTYPE 
+    if fxpar(hdr,'TEC1')-fxpar(hdr,'TSC1')+1 gt 2072 then region='CCD'
+; 
+; fill object data structure as appropriate
+    case region of 
+      'SJI': self->read_sji,d,hdr,f[ifile],silent=silent
+;      'CCD': self->read_ccd,d,hdr,f[ifile],silent=silent
+      else: self->read_lines,d,hdr,f[ifile],silent=silent
+    endcase
+;
+  endfor
+  self.nwin=total(self.regtot)
+end
+
+pro iris_data::read_sji,d,hdr,f,silent=silent
+  sji_id=fxpar(hdr,'TDESC1')
+; find out which slit jaw wavelength band is being read
+  case strupcase(strtrim(sji_id,2)) of
+    'SJI_1330': lwin=0
+    'SJI_1400': lwin=1
+    'SJI_2796': lwin=2
+    'SJI_2832': lwin=3
+    'SJI_1600W': lwin=4
+    'SJI_5000W': lwin=5
+    else: lwin=0
+  endcase
+  self.filename_sji[lwin]=f
+  if self.default_sjiwin eq -1 then self.default_sjiwin = lwin
+  self.sji_read[lwin]=1
+  self.sji_id[lwin]=sji_id
+  self.hdrsji[lwin]=ptr_new(hdr)
+  self.naxis1sji[lwin]=fxpar(hdr,'NAXIS1')
+  self.naxis2sji[lwin]=fxpar(hdr,'NAXIS2')
+  self.naxis3sji[lwin]=fxpar(hdr,'NAXIS3')
+;
+  self.sji_info[lwin].xs=fxpar(hdr,'TSC1')
+  self.sji_info[lwin].xw=fxpar(hdr,'TEC1')-fxpar(hdr,'TSC1')+1
+  self.sji_info[lwin].ys=fxpar(hdr,'TSR1')
+  self.sji_info[lwin].yw=fxpar(hdr,'TER1')-fxpar(hdr,'TSR1')+1
+;
+  a=readfits(f,hdr,exten_no=1,silent=silent)
+  self.sji_info[lwin].time=ptr_new(reform(a[fxpar(hdr,'TIME'),*]))
+  self.sji_info[lwin].pztx=ptr_new(reform(a[fxpar(hdr,'PZTX'),*]))
+  self.sji_info[lwin].pzty=ptr_new(reform(a[fxpar(hdr,'PZTY'),*]))
+  self.sji_info[lwin].exptime=ptr_new(reform(a[fxpar(hdr,'EXPTIMES'),*]))
+  self.sji_info[lwin].slit=ptr_new(reform(a[fxpar(hdr,'SLIT'),*]))
+  self.sji_info[lwin].sumsptrs=ptr_new(reform(a[fxpar(hdr,'SUMSPTRS'),*]))
+  self.sji_info[lwin].sumspats=ptr_new(reform(a[fxpar(hdr,'SUMSPATS'),*]))
+  self.sji_info[lwin].dsrcs=ptr_new(reform(a[fxpar(hdr,'DSRCSIX'),*]))
+  self.sji_info[lwin].lutids=ptr_new(reform(a[fxpar(hdr,'LUTIDS'),*]))
+  self.sji_info[lwin].xcen=ptr_new(reform(a[fxpar(hdr,'XCENIX'),*]))
+  self.sji_info[lwin].ycen=ptr_new(reform(a[fxpar(hdr,'YCENIX'),*]))
+  self.sji_info[lwin].obs_vr=ptr_new(reform(a[fxpar(hdr,'OBS_VRIX'),*]))
+;
+  a=readfits(f,hdr,exten_no=2,silent=silent)
+  srow=fxpar(hdr,'FRMID')
+  erow=fxpar(hdr,'LFRMID')+srow-1
+  if(erow ge srow) then self.sjiobs_info[lwin].frmid=ptr_new(string(a[srow:erow,*])) else self.sjiobs_info[lwin].frmid=ptr_new(' ')
+  srow=fxpar(hdr,'FDBIDS')
+  erow=fxpar(hdr,'LFDBIDS')+srow-1
+  if(erow ge srow) then self.sjiobs_info[lwin].fdbids=ptr_new(string(a[srow:erow,*])) else self.sjiobs_info[lwin].fdbids=ptr_new(' ')
+  srow=fxpar(hdr,'CRSIDS')
+  erow=fxpar(hdr,'LCRSIDS')+srow-1
+  if(erow ge srow) then self.sjiobs_info[lwin].crsids=ptr_new(string(a[srow:erow,*])) else self.sjiobs_info[lwin].crsids=ptr_new(' ')
+  srow=fxpar(hdr,'FILES')
+  erow=fxpar(hdr,'LFILES')+srow-1
+  if(erow ge srow) then self.sjiobs_info[lwin].files=ptr_new(string(a[srow:erow,*])) else self.sjiobs_info[lwin].files=ptr_new(' ')
+;
+  sub=where(self->gettime_sji(lwin,/all) ge min(self->gettime()) and $
+            self->gettime_sji(lwin,/all) le max(self->gettime()))
+  if sub[0] ne -1 then begin
+    self.locsji[lwin,*]=[min(sub),max(sub)]
+    self.wsji[lwin]=ptr_new(d[*,*,min(sub):max(sub)])
+    self.nexpsji[lwin]=n_elements(sub)
+  endif else begin
+    message,'no slit jaws found within raster time range, using nearest in time',/info
+    submin=min(abs(min(self->gettime())-self->gettime_sji(lwin,/all)),indxmin)
+    submax=min(abs(max(self->gettime())-self->gettime_sji(lwin,/all)),indxmax)
+    if submin lt submax then indx=indxmin else indx=indxmax
+    self.locsji[lwin,*]=[indx,indx]
+    self.wsji[lwin]=ptr_new(d[*,*,indx:indx])
+    self.nexpsji[lwin]=1
+  endelse
+end
+
+pro iris_data::read_lines,d,hdr,f,ifile=ifile,silent=silent
+;
+    if n_elements(ifile) eq 0 then ifile=0
+;
+    uwin=fxpar(hdr,'NWIN')
+    self.regtot[ifile]=uwin    
+    if ifile eq 0 then lwin=0 else lwin=self.regtot[ifile-1]
+    self.mapping[lwin:lwin+uwin-1]=ifile
+;
+    self.hdr[lwin]=ptr_new(hdr)
+    self.region[lwin:lwin+uwin-1]=strtrim(strupcase(fxpar(hdr,'TDET*')),2)
+;
+    self.line_id[lwin:lwin+uwin-1]=fxpar(hdr,'TDESC*')
+    self.win_info[lwin:lwin+uwin-1].xs=fxpar(hdr,'TSC*')
+    self.win_info[lwin:lwin+uwin-1].xw=fxpar(hdr,'TEC*')-fxpar(hdr,'TSC*')+1
+    self.win_info[lwin:lwin+uwin-1].ys=fxpar(hdr,'TSR*')
+    self.win_info[lwin:lwin+uwin-1].yw=fxpar(hdr,'TER*')-fxpar(hdr,'TSR*')+1
+; 
+    self.line_wvl=self->getinfo('TWAVE*',0)
+;
+; find location of line windows in fits file
+    openr,lu,f[ifile],/swap_if_little_endian,/get_lun
+    self.lu=lu
+    position=iris_find_winpos(lu,uwin)
+    self.position[0:uwin]=position
+;
+; set up pointers via the assoc function to the windows in
+; fits file
+    for iext=1,uwin do begin
+;      d=readfits(f[ifile],hdr,exten_no=iext,silent=silent)
+;      print,iext,lwin,size(d)
+;  extension headers, probably not too useful...except for debugging
+      mrd_head,f[ifile],hdr,extension=iext
+      case fxpar(hdr,'BITPIX') of 
+       16: self.w[lwin]=ptr_new(assoc(lu,intarr(self->getxw(lwin),self->getyw(lwin)),position[iext]))
+      -32: self.w[lwin]=ptr_new(assoc(lu,fltarr(self->getxw(lwin),self->getyw(lwin)),position[iext]))
+      else: message,'unsupported datatype '+self->getdatatype()
+      endcase
+      if self.default_win eq -1 then self.default_win = lwin
+      self.naxis1[lwin]=fxpar(hdr,'NAXIS1')
+      self.naxis2[lwin]=fxpar(hdr,'NAXIS2')      
+      self.naxis3[lwin]=fxpar(hdr,'NAXIS3')
+      self.hdr[iext]=ptr_new(hdr)
+;
+      lwin=lwin+1
+    endfor
+; add virtual window in cases where region is split between FUV1 and
+; FUV2, ie (usually) full CCD windows
+    if ifile eq 0 then lwin=0 else lwin=self.regtot[ifile-1]
+    for i=lwin,lwin+uwin-1 do begin
+      if self.win_info[i].xs lt 2072 and $
+         self.win_info[i].xs+self.win_info[i].xw ge 2072 then begin
+        self.mapping[i+1:lwin+uwin]=shift(self.mapping[i+1:lwin+uwin],1)
+        self.region[i+1:lwin+uwin]=shift(self.region[i+1:lwin+uwin],1)
+        self.line_id[i+1:lwin+uwin]=shift(self.line_id[i+1:lwin+uwin],1)
+        self.line_wvl[i+1:lwin+uwin]=shift(self.line_wvl[i+1:lwin+uwin],1)
+        self.win_info[i+1:lwin+uwin].xs=shift(self.win_info[i+1:lwin+uwin].xs,1)
+        self.win_info[i+1:lwin+uwin].xw=shift(self.win_info[i+1:lwin+uwin].xw,1)
+        self.win_info[i+1:lwin+uwin].ys=shift(self.win_info[i+1:lwin+uwin].ys,1)
+        self.win_info[i+1:lwin+uwin].yw=shift(self.win_info[i+1:lwin+uwin].yw,1)
+        self.w[i+1:lwin+uwin]=shift(self.w[i+1:lwin+uwin],1)
+;
+        self.mapping[i+1]=self.mapping[i]
+        self.region[i]='FUV1'
+        self.region[i+1]='FUV2'
+        self.line_id[i]='FULL CCD FUV1'
+        self.line_id[i+1]='FULL CCD FUV2'
+        self.win_info[i+1].xs=2073
+        self.win_info[i+1].xw=self.win_info[i].xw-(2072-self.win_info[i].xs)
+        self.win_info[i].xw=2072-self.win_info[i].xs
+        self.win_info[i+1].ys=self.win_info[i].ys
+        self.win_info[i+1].yw=self.win_info[i].yw
+;
+        xs=self.win_info[i].xs
+        xw=self.win_info[i].xw
+        lam_fuv1=((self->getcal())->lambda_fuv1())[xs:xs+xw-1]
+        xs=self.win_info[i+1].xs
+        xw=self.win_info[i+1].xw
+        lam_fuv2=((self->getcal())->lambda_fuv2())[xs-2072:xs-2072+xw-1]
+        self.line_wvl[i]=mean(lam_fuv1)
+        self.line_wvl[i+1]=mean(lam_fuv2)
+;
+        self.w[i+1]=self.w[i]
+;
+        uwin=uwin+1
+      endif
+   endfor
+   self.regtot[ifile]=uwin
+; read auxilary data contained in last two extensions of each file
+   d=readfits(f[ifile],hdr,exten_no=uwin+1,silent=silent)
+   self.aux_info[ifile].time=ptr_new(reform(d[fxpar(hdr,'TIME'),*]))
+   self.aux_info[ifile].pztx=ptr_new(reform(d[fxpar(hdr,'PZTX'),*]))
+   self.aux_info[ifile].pzty=ptr_new(reform(d[fxpar(hdr,'PZTY'),*]))
+   self.aux_info[ifile].exptimef=ptr_new(reform(d[fxpar(hdr,'EXPTIMEF'),*]))
+   self.aux_info[ifile].exptimen=ptr_new(reform(d[fxpar(hdr,'EXPTIMEN'),*]))
+   self.aux_info[ifile].sumsptrf=ptr_new(reform(d[fxpar(hdr,'SUMSPTRF'),*]))
+   self.aux_info[ifile].sumsptrn=ptr_new(reform(d[fxpar(hdr,'SUMSPTRN'),*]))
+   self.aux_info[ifile].sumspatf=ptr_new(reform(d[fxpar(hdr,'SUMSPATF'),*]))
+   self.aux_info[ifile].sumspatn=ptr_new(reform(d[fxpar(hdr,'SUMSPATN'),*]))
+   self.aux_info[ifile].dsrcf=ptr_new(reform(d[fxpar(hdr,'DSRCFIX'),*]))
+   self.aux_info[ifile].dsrcn=ptr_new(reform(d[fxpar(hdr,'DSRCNIX'),*]))
+   self.aux_info[ifile].lutidf=ptr_new(reform(d[fxpar(hdr,'LUTIDF'),*]))
+   self.aux_info[ifile].lutidn=ptr_new(reform(d[fxpar(hdr,'LUTIDN'),*]))
+   self.aux_info[ifile].xcen=ptr_new(reform(d[fxpar(hdr,'XCENIX'),*]))
+   self.aux_info[ifile].ycen=ptr_new(reform(d[fxpar(hdr,'YCENIX'),*]))
+   ix=fxpar(hdr,'OBS_VRIX')
+   if fxpar(hdr,'YCENIX') eq fxpar(hdr,'OBS_VRIX') then ix=ix+1
+   self.aux_info[ifile].obs_vr=ptr_new(reform(d[ix,*]))
+; frmid, fdbid, crsid, etc in exten_no=uwin+2, not implemented yet
+   d=readfits(f[ifile],hdr,exten_no=uwin+2,silent=silent)
+   srow=fxpar(hdr,'FRMID')
+   erow=fxpar(hdr,'LFRMID')+srow-1
+   if(erow ge srow) then self.obs_info[ifile].frmid=ptr_new(string(d[srow:erow,*])) else self.obs_info[ifile].frmid=ptr_new(' ')
+   srow=fxpar(hdr,'FDBIDF')
+   erow=fxpar(hdr,'LFDBIDF')+srow-1
+   if(erow ge srow) then self.obs_info[ifile].fdbidf=ptr_new(string(d[srow:erow,*])) else self.obs_info[ifile].fdbidf=ptr_new(' ')
+   srow=fxpar(hdr,'CRSIDF')
+   erow=fxpar(hdr,'LCRSIDF')+srow-1
+   if(erow ge srow) then self.obs_info[ifile].crsidf=ptr_new(string(d[srow:erow,*])) else self.obs_info[ifile].crsidf=ptr_new(' ')
+   srow=fxpar(hdr,'FDBIDN')
+   erow=fxpar(hdr,'LFDBIDN')+srow-1
+   if(erow ge srow) then self.obs_info[ifile].fdbidn=ptr_new(string(d[srow:erow,*])) else self.obs_info[ifile].fdbidn=ptr_new(' ')
+   srow=fxpar(hdr,'CRSIDN')
+   erow=fxpar(hdr,'LCRSIDN')+srow-1
+   if(erow ge srow) then self.obs_info[ifile].crsidn=ptr_new(string(d[srow:erow,*])) else self.obs_info[ifile].crsidn=ptr_new(' ')
+   srow=fxpar(hdr,'FILEF')
+   erow=fxpar(hdr,'LFILEF')+srow-1
+   if(erow ge srow) then self.obs_info[ifile].filef=ptr_new(string(d[srow:erow,*])) else self.obs_info[ifile].filef=ptr_new(' ')
+   srow=fxpar(hdr,'FILEN')
+   erow=fxpar(hdr,'LFILEN')+srow-1
+   if(erow ge srow) then self.obs_info[ifile].filen=ptr_new(string(d[srow:erow,*])) else self.obs_info[ifile].filen=ptr_new(' ')
+end
+
+pro iris_data__define           
+mfile=10
+mwin=25
+nsji=6
+wpos=create_struct(name='win_info','xs',0,'xw',0,'ys',0,'yw',0)
+obsinf=create_struct(name='obs_info','frmid',ptr_new(), $
+                                     'fdbidf',ptr_new(),'crsidf',ptr_new(), $
+                                     'fdbidn',ptr_new(),'crsidn',ptr_new(), $
+                                     'filef',ptr_new(),'filen',ptr_new())
+sjiobsinf=create_struct(name='sjiobs_info','frmid',ptr_new(), $
+                                     'fdbids',ptr_new(),'crsids',ptr_new(), $
+                                     'files',ptr_new())
+auxinf=create_struct(name='aux_info','time',ptr_new(), $
+                                     'pztx',ptr_new(),'pzty',ptr_new(), $
+                                     'exptimef',ptr_new(),'exptimen',ptr_new(), $
+                                     'sumsptrf',ptr_new(),'sumsptrn',ptr_new(), $
+                                     'sumspatf',ptr_new(),'sumspatn',ptr_new(), $
+                                     'dsrcf',ptr_new(),'dsrcn',ptr_new(), $
+                                     'lutidf',ptr_new(),'lutidn',ptr_new(), $
+                                     'xcen',ptr_new(),'ycen',ptr_new(), $
+                                     'obs_vr',ptr_new())
+sjiinf=create_struct(name='sji_info','xs',0,'xw',0,'ys',0,'yw',0,'time',ptr_new(), $
+                                     'pztx',ptr_new(),'pzty',ptr_new(), $
+                                     'exptime',ptr_new(),'slit',ptr_new(), $
+                                     'sumsptrs',ptr_new(),'sumspats',ptr_new(), $
+                                     'dsrcs',ptr_new(),'lutids',ptr_new(), $
+                                     'xcen',ptr_new(),'ycen',ptr_new(), $
+                                     'obs_vr',ptr_new())
+wdstruct=create_struct(name = 'wd_def',  'line_px', intarr(2), $
+                           'cont_px', intarr(2))
+struct={iris_data, title: '  ', $
+                 comment:'', $
+                 filename:'', $
+                 lu:0,$
+                 ver_no: 0, $
+                 aux:ptr_new(), $
+                 cal:ptr_new(), $
+                 iiobslid:'',$
+                 nwin: 0, $
+                 default_win:0,$
+                 regtot: intarr(mfile), $
+                 xcen: -9999., $
+                 ycen: -9999., $
+                 fovx: 0.0, $
+                 fovy: 0.0, $
+                 file: strarr(mfile), $
+                 nfiles: 0, $
+                 region: strarr(mwin), $
+                 mapping: intarr(mwin), $
+                 line_id: strarr(mwin), $
+                 naxis1: intarr(mwin), $
+                 naxis2: intarr(mwin), $
+                 naxis3: intarr(mwin), $
+                 position: lon64arr(mwin), $
+                 hdr: ptrarr(mwin),$
+                 w: ptrarr(mwin),$
+                 win_info:replicate({win_info},mwin), $
+                 default_sjiwin:-1,$
+                 line_wvl: fltarr(mwin), $
+                 aux_info:replicate({aux_info},mfile), $
+                 obs_info:replicate({obs_info},mfile), $
+                 wd_def:replicate({wd_def}, mwin), $
+                 filename_sji:strarr(nsji),$
+                 sji_iiobslid:'',$
+                 sji_id: strarr(nsji), $
+                 naxis1sji: intarr(nsji), $
+                 naxis2sji: intarr(nsji), $
+                 naxis3sji: intarr(nsji), $
+                 nexpsji: intarr(nsji), $
+                 locsji: intarr(nsji,2), $
+                 hdrsji: ptrarr(nsji),$
+                 wsji: ptrarr(nsji),$
+                 sji_info: replicate({sji_info},nsji),$
+                 sjiobs_info: replicate({sjiobs_info},nsji),$
+                 sji_read: intarr(nsji)$
+           }
+end
+

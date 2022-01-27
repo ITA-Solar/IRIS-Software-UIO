@@ -1,0 +1,7 @@
+FW
+1 :    Glass
+31 :  1330A   FUV1
+61 :  2796A   NUV1
+91 :  1400A   FUV2
+121 : 2832A  NUV2
+151 : Broadband

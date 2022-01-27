@@ -1,0 +1,8 @@
+* Implemented true 1:1 zoom and revisited zoom functionality
+* Enabled direct loading of session file and loading last session   
+* Implemented handling SOLARNET-standard tabulated FITS files
+* Modified and optimised warping non-equidistant spectra
+* Implemented per-diagnostic restriction of wavelength range
+* Cosmetic changes to make control panel layout more compact 
+* Fixed miscellaneous minor bugs (a.o., crashes on determining 
+  scaling variables, negative indexing, WCS timestep selection)

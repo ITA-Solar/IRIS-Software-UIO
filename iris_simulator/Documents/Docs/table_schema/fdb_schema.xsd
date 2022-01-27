@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="FDB">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Info" minOccurs="0" maxOccurs="1">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Time" type="xs:double"/>
+              <xs:element name="DataSize" type="xs:double"/>
+              <xs:element name="Description" type="xs:string"/>
+              <xs:element name="Type" type="xs:string"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="Header" minOccurs="1" maxOccurs="1">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Id" type="xs:string"/>
+              <xs:element name="Size" type="xs:integer"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="Data" minOccurs="1" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="CrsId" type="xs:string"/>
+              <xs:element name="Exp_Duration" type="xs:integer"/>
+              <xs:element name="Exp_Type" type="xs:integer"/>
+              <xs:element name="CompN" type="xs:integer"/>
+              <xs:element name="CompK" type="xs:integer"/>
+              <xs:element name="LookupTableId" type="xs:string"/>
+              <xs:element name="Max_Exposure" type="xs:integer"/>
+              <xs:element name="Min_Exposure" type="xs:integer"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

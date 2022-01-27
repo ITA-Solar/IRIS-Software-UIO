@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>org.iris.cvs_solarsoft_update</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/mn/xsan/u1/viggoh/bin/update_iris_ssw.csh</string>
+    </array>
+    <key>StandardOutPath</key>
+    <array>
+        <string>/mn/xsan/u1/viggoh/iris/idl/logs/</string>
+    </array>
+    <key>StartInterval</key>
+    <integer>1800</integer>
+</dict>
+</plist>
