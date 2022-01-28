@@ -3,8 +3,8 @@
 If you find any bugs, please report them to the developers at the Institute of Theoretical Astrophysics.
 Preferably by raising a new issue here: https://github.com/ITA-Solar/IRIS-Software-UIO/issues
 
-or else by mail to:
-v.h.hansteen@astro.uio.no
+or else by mail to:  
+v.h.hansteen@astro.uio.no  
 martin.wiesmann@astro.uio.no  
 
 
