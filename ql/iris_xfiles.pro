@@ -220,14 +220,15 @@ pro iris_xfiles_searchdir, info
                 dirind=where((dirdates ge startdate) AND (dirdates le stopdate), count)
                 if count gt 0 then begin
                   for idir=0,count-1 do begin
-                    if strmid(temp0[idir], 0,1, /reverse_offset) ne dirsep then temp0[idir] = temp0[idir]+dirsep
-                    spawn, 'ls ' + paths[p] + temp0[idir], temp1
+                    idir_cur = dirind[idir]
+                    if strmid(temp0[idir_cur], 0,1, /reverse_offset) ne dirsep then temp0[idir_cur] = temp0[idir_cur]+dirsep
+                    spawn, 'ls ' + paths[p] + temp0[idir_cur], temp1
                     if (*info).filter ne '' then begin
                       findin = where(strmatch(temp1, (*info).filter, /fold_case) eq 1, fcount0)
                       if fcount0 gt 0 then temp1 = temp1[findin] $
                       else temp1=''
                     endif
-                    if temp1[0] ne '' then temp1 = paths[p]+temp0[idir]+temp1
+                    if temp1[0] ne '' then temp1 = paths[p]+temp0[idir_cur]+temp1
                     fcount = fcount + fcount0
                     if fcount0 gt 0 then begin
                       if N_ELEMENTS(temp) eq 0 then temp=temp1 $
