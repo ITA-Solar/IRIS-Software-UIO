@@ -4,3 +4,4 @@
 \#*.pro\#
 *.\#*.pro*
 *.pro~
+.project
