@@ -37,8 +37,9 @@
 ;
 ; MODIFICATION HISTORY:
 ;       31-Dec-2012: Viggo Hansteen (based on EIS_HDR/DATA__DEFINE)
+;       06-Dec-2022: viggoh/Fixed possibility of W->E scan.
 ;
-; $Id: 2022-12-06 12:29 CET $
+; $Id: 2022-12-06 12:43 CET $
 ;
 ;-
 function iris_data::init,file,verbose=verbose
