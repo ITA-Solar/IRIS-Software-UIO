@@ -38,7 +38,7 @@
 ; MODIFICATION HISTORY:
 ;       31-Dec-2012: Viggo Hansteen (based on EIS_HDR/DATA__DEFINE)
 ;
-; $Id: iris_data__define.pro,v 1.115 2019/02/01 12:57:48 mawiesma Exp $
+; $Id: 2022-12-06 12:29 CET $
 ;
 ;-
 function iris_data::init,file,verbose=verbose
@@ -240,7 +240,7 @@ function iris_data::getsit_and_stare,iwin
 ;returns 1 if raster is a sit-and-stare, 0 otherwise
   if n_elements(iwin) eq 0 then iwin=self.default_win
   ;if self->getfovx(iwin) lt (self->getresy(iwin))*2.1 then return,1 else return,0
-  if self->getinfo('CDELT3',iwin+1) lt 0.1 then return,1 else return,0
+  if abs(self->getinfo('CDELT3',iwin+1)) lt 0.1 then return,1 else return,0
 end
 
 function iris_data::binning_region,region
@@ -493,16 +493,22 @@ function iris_data::getvar,iwin,revnegdx=revnegdx,load=load,noscale=noscale
   if n_elements(iwin) eq 0 then iwin=self.default_win
   if n_elements(load) eq 0 then load=0
   if n_elements(noscale) eq 0 then noscale=0
-  if n_elements(revnegdx) eq 0 then revnegdx=0
+  if n_elements(revnegdx) eq 0 then revnegdx=1
   iwin=(self->getwindx(iwin))[0]
   neg=0
-  if revnegdx and self->getdx(0,iwin=iwin) lt 0 then neg=1
+  if revnegdx and self->getdx(0,iwin=iwin) lt 0 then begin
+     neg=1
+     load=1
+;     noscale=1
+  endif
   if ptr_valid(self.w[iwin]) then begin
     if load then begin
       w=fltarr(self->getxw(iwin),self->getyw(iwin),self->getnraster(iwin))
       if neg then begin
         for i=0,self->getnraster(iwin)-1 do begin
-          w[*,*,i]=self->descale_array((*self.w[iwin])[*,*,self->getnraster(iwin)-1-i])
+          if noscale then w[*,*,i]=(*self.w[iwin])[*,*,self->getnraster(iwin)-1-i] $
+          else w[*,*,i]=self->descale_array((*self.w[iwin])[*,*,self->getnraster(iwin)-1-i])
+;          w[*,*,i]=self->descale_array((*self.w[iwin])[*,*,self->getnraster(iwin)-1-i])
         endfor
         return,w
       endif else begin

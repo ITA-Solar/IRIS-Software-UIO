@@ -25,6 +25,8 @@
 ;                with level2 substituted with level3)
 ;	gw     - level3 directories made with write permission for
 ;                group if they don't exist before
+;       orx    - set protection o+rx for directories and o+r for
+;                created files
 ;       sp     - make also sp level3 file
 ;       longwsji use longes wavelength SJI image (useful for SST observations)
 ;       cpsji  - copy SJI images instead of linking them
@@ -60,19 +62,20 @@
 ;       1.7  2014/01/15 matsc  - added keyword /longwsji
 ;       1.8  2014/01/20 matsc  - added keyword /cpsji
 ;	1.9  2014/08/13 matsc  - added keyword /gw
+;       1.11 2022-11-01 matsc  - added keyword /orx
 ;
-; $Id: iris_obsl223.pro,v 1.10 2014/09/11 06:27:29 matsc Exp $;
+; $Id: 2022-12-06 12:29 CET $;
 ;-
-pro iris_obsl223,obs ,wins,iwin=iwin,all=all,sp=sp,rootl2=rootl2,rootl3=rootl3,gw=gw,longwsji=longwsji,cpsji=cpsji,$
+pro iris_obsl223,obs ,wins,iwin=iwin,all=all,sp=sp,rootl2=rootl2,rootl3=rootl3,gw=gw,orx=orx,longwsji=longwsji,cpsji=cpsji,$
  debug=debug,verbose=verbose,version=version,silent=silent,replace=replace,_extra=e
 
-verstring="$Id: iris_obsl223.pro,v 1.10 2014/09/11 06:27:29 matsc Exp $"
+verstring="$Id: iris_obsl223.pro,v 1.11 2022/11/01 09:02:00 matsc Exp $;"
 if(~keyword_set(silent) or keyword_set(version)) then begin
   ic=strpos(verstring,'pro,v')+6
   message,'version '+strmid(verstring,ic,strlen(verstring)-ic-6),/info
 endif
 if(n_params() lt 1) then begin
-  message,'Syntax: iris_obsl223,obs ,iwin=iwin,/all,/sp,rootl2=rootl2,rootl3=rootl3,/gw,/longwsji,/cpsji,/debug,/verbose,/silent,/replace,_extra=e',/info
+  message,'Syntax: iris_obsl223,obs ,iwin=iwin,/all,/sp,rootl2=rootl2,rootl3=rootl3,/gw,/orx,/longwsji,/cpsji,/debug,/verbose,/silent,/replace,_extra=e',/info
   return
 endif
 if(keyword_set(silent)) then verbose=0
@@ -127,18 +130,22 @@ cd,rootl3
 dum=file_search(yyyy,count=count)
 if(count ne 1) then spawn,'mkdir '+yyyy
 if(keyword_set(gw)) then spawn,'chmod g+w '+yyyy
+if(keyword_set(orx)) then spawn,'chmod o+rx '+yyyy
 cd,yyyy
 dum=file_search(mm,count=count)
 if(count ne 1) then spawn,'mkdir '+mm
 if(keyword_set(gw)) then spawn,'chmod g+w '+mm
+if(keyword_set(orx)) then spawn,'chmod o+rx '+mm
 cd,mm
 dum=file_search(dd,count=count)
 if(count ne 1) then spawn,'mkdir '+dd
 if(keyword_set(gw)) then spawn,'chmod g+w '+dd
+if(keyword_set(orx)) then spawn,'chmod o+rx '+dd
 cd,dd
 dum=file_search(obs,count=count)
 if(count ne 1) then spawn,'mkdir '+obs
 if(keyword_set(gw)) then spawn,'chmod g+w '+obs
+if(keyword_set(orx)) then spawn,'chmod o+rx '+obs
 cd,obs
 cd,current=dirl3
 
@@ -213,6 +220,7 @@ if(nsji ne 0) then begin
     endfor
   endelse
 endif
+if(keyword_set(orx)) then spawn,'chmod o+r *'
 
 cd,cwd
 if(keyword_set(debug)) then stop
