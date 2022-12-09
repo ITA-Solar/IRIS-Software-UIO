@@ -84,9 +84,12 @@
 ;       1.43 2015/01/13 matsc   - speeded up large sit-and-stare datasets. uses maximum of tmp_size GB for output array (default 12 GB)
 ;       1.44 2015/12/10 matsc   - changed sit-and-stare test to use method getsit_and_stare from iris_data
 ;       1.45 2017/06/23 Nick Crump - added L2 HISTORY to L3 header to keep track of iris_prep version
-;       1.46 2017/06/27 matsc   - added VER_RF2 and DATE_RF2 to L3 header
+;       1.46 2017/06/27 matsc   - added VER_RF2 and DATE_RF2 to L3
+;                                 header
+;       1.47 2022/12/06 matsc   - made modifications to CRPIX1, CDELT1 and WCS keywords to properly display
+;                                 and show coordinates in CRISPEX for W->E scans
 ;
-; $Id: iris_make_fits_level3.pro,v 1.46 2017/06/27 11:57:13 matsc Exp $
+; $Id: 2022-12-06 12:29 CET $
 ;
 ;-
 pro iris_make_fits_level3,file,iwin,sp=sp,tmp_size=tmp_size,sjifile=sjifile,all=all,wdir=wdir,replace=replace,yshift=yshift,wcscorr=wcscorr,$
@@ -261,7 +264,7 @@ sxaddpar,hdr,'DATE_OBS',date_obs,' ',before='DATE'
 sxaddpar,hdr,'STARTOBS',date_obs,' ',before='DATE'
 sxaddpar,hdr,'BTYPE','Intensity',before='DATE'
 sxaddpar,hdr,'BUNIT',bunit,before='DATE'
-sxaddpar,hdr,'CDELT1',dx,' [arcsec] x-coordinate increment',before='DATE'
+sxaddpar,hdr,'CDELT1',abs(dx),' [arcsec] x-coordinate increment',before='DATE'
 sxaddpar,hdr,'CDELT2',dy,' [arcsec] y-coordinate increment',before='DATE'
 sxaddpar,hdr,'CDELT3',dw,' [AA] wavelength increment',before='DATE'
 sxaddpar,hdr,'CDELT4',dt,' [s] t-coordinate axis increment',before='DATE'
@@ -270,6 +273,7 @@ if(sit_and_stare) then begin
   crpix1=1
 endif else begin
   crpix1=d->getinfo('CRPIX3',iwin[0]+1)
+  if(dx lt 0.0) then crpix1=nx-crpix1+1  ; for W->E scan, image is reversed to E->W
   sxaddpar,hdr,'CRPIX1',crpix1,' reference pixel x-coordinate',before='DATE'
 endelse
 sxaddpar,hdr,'CRPIX2',d->getinfo('CRPIX2',iwin[0]+1),' reference pixel y-coordinate',before='DATE'
@@ -323,6 +327,10 @@ endelse
 if(keyword_set(wcscorr)) then begin
   pc12=pc12*dy/dx
   pc21=pc21*dx/dy
+endif
+if(dx lt 0.0) then begin
+  pc12=-pc12
+  pc21=-pc21
 endif
 sxaddpar,hdr,'PC1_1',pc11,before='DATE'
 sxaddpar,hdr,'PC1_2',pc12,before='DATE'
