@@ -61,7 +61,7 @@
 ;       22-Apr-2008: A. Gardini     - Set margin parameters in panel.
 ;       17-Jan-2013: V. Hansteen    - rewritten as iris_xraster
 ;
-; $Id: iris_xraster.pro,v 1.18 2013/10/16 10:21:23 viggoh Exp $
+; $Id: 2022-12-09 13:06 PST $
 ;-
 ;
 ; save as postscript file
@@ -141,7 +141,7 @@ pro iris_xraster_draw, event
 ; set up plot scale:
   for i = 0, (*info).nwin-1 do begin
     j = (*info).windows[i]
-    *(*info).data-> getwin,j,wd,pos
+    *(*info).data-> getwin,j,wd,pos,noscale=1
     for it=0,min([5,nr-1]) do begin
       var=*(*info).data->descale_array(wd[*,*,it])
       wdmin[i]=min([min(iris_histo_opt(var,0.01,/bot_only,missing=*(*info).data->missing())),wdmin[i]],/nan)

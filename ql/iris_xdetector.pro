@@ -44,7 +44,7 @@
 ;       12-Sep-2002: Oivind Wikstol: First version - xdetector for EIS
 ;        2-Jan-2013: Viggo Hansteen: Rewritten for IRIS data
 ;
-; $Id: iris_xdetector.pro,v 1.37 2015/08/19 13:13:36 mawiesma Exp $
+; $Id: 2022-12-09 13:06 PST $
 ;-
 ;
 ; save as postscript file
@@ -169,7 +169,7 @@ pro iris_xdetector_expslider, event
   ys=*(*info).data->getys()-ysmax
   for i=0,(*info).nwin-1 do begin
     lindxi=(*info).lindx[i]
-    wd=*(*info).data->getvar(lindxi)
+    wd=*(*info).data->getvar(lindxi,noscale=1)
     xss=0
     if *(*info).data->getline_id(i) eq 'FULL CCD FUV2' then xss=xs[i]-xs[i-1]-1
     bin_sp=*(*info).data->binning_spectral(lindxi)
@@ -223,7 +223,7 @@ pro iris_xdetector_expprp_slider, event
   ys=*(*info).data->getys()-ysmax
   for i=0,(*info).nwin-1 do begin
     lindxi=(*info).lindx[i]
-    wd=*(*info).data->getvar(lindxi)
+    wd=*(*info).data->getvar(lindxi,noscale=1)
     xss=0
     if *(*info).data->getline_id(i) eq 'FULL CCD FUV2' then xss=xs[i]-xs[i-1]-1
     pos0 = xs[lindxi] mod (*(*info).data->getccd_sz('FUV1'))[0]
@@ -291,7 +291,7 @@ pro iris_xdetector_rast_slider, event
   ys=*(*info).data->getys()-ysmax
   for i=0,(*info).nwin-1 do begin
     lindxi=(*info).lindx[i]
-    wd=*(*info).data->getvar(lindxi)
+    wd=*(*info).data->getvar(lindxi,noscale=1)
     xss=0
     if *(*info).data->getline_id(i) eq 'FULL CCD FUV2' then xss=xs[i]-xs[i-1]-1
     pos0 = xs[lindxi] mod (*(*info).data->getccd_sz('FUV1'))[0]
@@ -882,7 +882,7 @@ pro iris_xdetector, data, lindx, group_leader = group_leader, $
   detector[*] = data->missing()
 ;
   for i=0,nwin-1 do begin
-    wd=data->getvar(lindx[i])
+    wd=data->getvar(lindx[i],noscale=1)
     xss=0
     if data->getline_id(lindx[i]) eq 'FULL CCD FUV2' then xss=xs[lindx[i]]-xs[lindx[i-1]]-1
     bin_sp=data->binning_spectral(lindx[i])
