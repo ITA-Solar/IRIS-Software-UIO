@@ -32,7 +32,7 @@
 ; MODIFICATION HISTORY:
 ;     1-Jan-2013: First version started by Viggo Hansteen
 ;
-; $Id: iris_xcontrol.pro,v 1.74 2015/08/18 10:07:32 mawiesma Exp $
+; $Id: 2022-12-09 11:12 PST $
 ;-
 ;
 ;
@@ -523,7 +523,7 @@ pro iris_xcontrol, data, group_leader = group_leader
   xs=data->getxs()
   ys=data->getys()-ysmax
   for i=0,nwin-1 do begin
-    wd=data->getvar(i)
+    wd=data->getvar(i,noscale=1)
     imax=data->getinfo('TDP90_'+strtrim(string(i+1),2))
     if data->getregion(i) eq 'FUV' then begin
       xss=0
