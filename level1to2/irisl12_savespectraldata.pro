@@ -783,7 +783,7 @@ PRO IRISl12_saveSpectralData, hdr, files, hdrmap, rasters, filename, OBSvars, l1
         endif
         
         ;calculate real FOVX, from real data, only if it is not a sit-and-stare
-        if ~rasters[rastertypenr].sitandstare then FOVX = (rasters[rastertypenr].nSteps-1) * basicStepSizeAv
+        if ~rasters[rastertypenr].sitandstare then FOVX = abs(rasters[rastertypenr].nSteps-1) * basicStepSizeAv)
 
         ; we need to adjust pc3_2 and pc2_3 for different pixelsizes (only for non-sit-and-stare)
         if ~rasters[rastertypenr].sitandstare then begin

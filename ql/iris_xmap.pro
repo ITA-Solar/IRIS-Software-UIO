@@ -69,7 +69,7 @@
 ;                                 xmap_warcsec.
 ;       22-Jan-2013: V. Hansteen - First IRIS modified version.
 ;
-; $Id: iris_xmap.pro,v 1.44 2015/03/26 15:45:00 viggoh Exp $
+; $Id: 2023-04-20 12:00 PDT $
 ;-
 ;
 ; save as postscript file
@@ -552,7 +552,7 @@ pro iris_xmap_resize, event
   if (*info).xdim eq 2 or (*info).xdim eq 1 or (*info).xdim eq 3 then rotate=4 else rotate=1
   if (*info).comment eq 'IRIS_moment' then begin
     moment_name=*(*info).data->getmomentnames((*info).dpnr)
-    wd=(*(*info).data)->getvar((*info).line)
+    wd=(*(*info).data)->getvar((*info).line,/revnegdx)
     drawimage = rotate(reform(wd[(*info).dpnr, *, *]),rotate)
     (*info).colorbar_title=(*(*info).data->getmomentnames((*info).dpnr))+$
                           ' '+(*(*info).data->getmomentunits((*info).dpnr))
