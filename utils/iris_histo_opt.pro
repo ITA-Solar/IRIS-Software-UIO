@@ -21,9 +21,9 @@ FUNCTION iris_histo_opt, image, cutoff, ix, top_only=top, bot_only=bot, $
 ;                  pixels of value missing in
 ;                  histogram calculation
 ;       LOW_LIMIT: if set ignore pixels of value low_limit and lower
-;                  all NAN values will be set to this value
+;                  all NAN values and -INF values will be set to this value
 ;       HIGH_LIMIT:if set ignore pixels of value high_limit and higher
-;                  all INF values will be set to this value
+;                  all +INF values will be set to this value
 ;       SILENT   : do not produce error messages
 ; OUTPUTS:
 ;       CLIP_IMAGE : Image with the CUTOFF fraction lowest and highest
@@ -83,7 +83,7 @@ FUNCTION iris_histo_opt, image, cutoff, ix, top_only=top, bot_only=bot, $
   
   if n_elements(low_limit) ne 0 then begin
     imsave1=image
-    low = where(image eq !values.f_nan,nlow)
+    low = where(finite(image, /nan) OR finite(image, /INFINITY, sign=-1),nlow)
     if nlow ne 0 then image[low]=low_limit
     good=where(image gt low_limit,ngood)
     if ngood eq 0 then begin
@@ -95,7 +95,7 @@ FUNCTION iris_histo_opt, image, cutoff, ix, top_only=top, bot_only=bot, $
   
   if n_elements(high_limit) ne 0 then begin
     imsave2=image
-    high = where(image eq !values.f_infinity,nhigh)
+    high = where(finite(image, /INFINITY, sign=1),nhigh)
     if nhigh ne 0 then image[high]=high_limit
     good=where(image lt high_limit,ngood)
     if ngood eq 0 then begin
