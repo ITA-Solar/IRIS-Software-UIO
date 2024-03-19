@@ -1,4 +1,4 @@
-; $Id: iris_processaiarequest.pro,v 1.35 2017/12/08 20:26:46 mawiesma Exp $  ;
+; $Id: 2024-03-15 11:29 CET $  ;
 
 pro IRIS_processAIArequest, obs2fov, waves=waves, $
   tres=tres, maxframes=maxframes, method=method, $
@@ -154,7 +154,7 @@ pro IRIS_processAIArequest, obs2fov, waves=waves, $
         nfilesl1 = lonarr(N_ELEMENTS(waves))
         for iwave=0,N_ELEMENTS(waves)-1 do begin
           print,'Wavelength: '+waves[iwave]+' A'
-          files = vso_search(starttime, endtime, instr=instrument, res=1, wave=waves[iwave], sample=tres, count=count)
+          files = vso_search(starttime, endtime, instr=instrument, wave=waves[iwave], sample=tres, count=count) ; , res=1
           nfilesl1[iwave] = count
           if count gt 0 then filesfound[iwave] = ptr_new(files)
         endfor
