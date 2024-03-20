@@ -20,14 +20,14 @@
 ;       irisdir: The path to the level 2 IRIS data (optional)
 ;                if not given, the program tries to find it using the OBSid
 ;                first it looks in getenv('IRIS_DATA')+'/level2/'
-;                if not found it looks in '/mn/xsan/d2/iris/data/level2/';UIO
-;                if not found it looks in '/irisa/data/level2/';LMSAL
+;                if not found it looks in IRISsim_constants->get_data_path_uio_l2();UIO
+;                if not found it looks in IRISsim_constants->get_data_path_lmsal_l2();LMSAL
 ;       aiadir: The path to the level 2 AIA data (optional)
 ;                if not given, the program tries to find it using the OBSid
 ;                (At UIO we decided to save the AIA files in the IRIS level 3 branch for convenience)
 ;                first it looks in getenv('IRIS_DATA')+'/level3/'
-;                if not found it looks in '/mn/xsan/d2/iris/data/level3/';UIO
-;                if not found it looks in '/irisa/data/level3/';LMSAL
+;                if not found it looks in IRISsim_constants->get_data_path_uio_l3();UIO
+;                if not found it looks in IRISsim_constants->get_data_path_lmsal_l3();LMSAL
 ;
 ; OUTPUTS:
 ;       When desired changes are applied the header keywords and
@@ -51,7 +51,7 @@
 ; MODIFICATION HISTORY:
 ;       8-Oct-2014: Martin Wiesmann
 ;
-; $Id: iris_aia_manualalign.pro,v 1.4 2014/10/10 14:28:05 mawiesma Exp $
+; $Id: 2024-03-20 14:43 CET $
 ;
 ;-
 
@@ -576,13 +576,8 @@ end
 ; Main program
 pro iris_aia_manualalign, OBSid, irisdir=irisdir, aiadir=aiadir
 
-  ;irisdir = '/mn/xsan/d2/iris/data/level2/2014/08/01/20140801_041324_3882010194/'
-  ;aiadir = '~/iris/aia/20140801_041324_3882010194/'
-  
-  ;irisdir = '/mn/xsan/d2/iris/data/level2/2013/10/20/20131020_014200_3844045638/'
-  ;aiadir = '~/iris/aia/20131020_014200_3844045638/'
-  
-  
+  constants = obj_new('IRISsim_constants')
+
   if N_PARAMS() eq 0 then begin
     if ~keyword_set(irisdir) || ~keyword_set(aiadir) then begin
       print, 'usage: iris_aia_manualalign, OBSid[, irisdir=irisdir, aiadir=aiadir]'
@@ -594,9 +589,9 @@ pro iris_aia_manualalign, OBSid, irisdir=irisdir, aiadir=aiadir
     if ~keyword_set(irisdir) then begin
       rootl2=getenv('IRIS_DATA')+'/level2/'
       if ~file_test(rootl2, /directory) then begin
-        rootl2='/mn/xsan/d2/iris/data/level2/';UIO
+        rootl2=constants->get_data_path_uio_l2();UIO
         if ~file_test(rootl2, /directory) then begin
-          rootl2='/irisa/data/level2/';LMSAL
+          rootl2=constants->get_data_path_lmsal_l2();LMSAL
           if ~file_test(rootl2, /directory) then begin
             print, 'could not find root directory to iris level 2 data'
             return
@@ -611,9 +606,9 @@ pro iris_aia_manualalign, OBSid, irisdir=irisdir, aiadir=aiadir
     if ~keyword_set(aiadir) then begin
       rootl3=getenv('IRIS_DATA')+'/level3/'
       if ~file_test(rootl3, /directory) then begin
-        rootl3='/mn/xsan/d2/iris/data/level3/'
+        rootl3=constants->get_data_path_uio_l3()
         if ~file_test(rootl3, /directory) then begin
-          rootl3='/irisa/data/level3/'
+          rootl3=constants->get_data_path_lmsal_l3()
           if ~file_test(rootl3, /directory) then begin
             print, 'could not find root directory to iris level 3 data'
             return

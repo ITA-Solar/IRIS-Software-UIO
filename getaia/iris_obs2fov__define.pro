@@ -1,4 +1,4 @@
-; $Id: iris_obs2fov__define.pro,v 1.19 2020/01/15 14:44:20 mawiesma Exp $  ;
+; $Id: 2024-03-20 14:43 CET $  ;
 
 
 FUNCTION IRIS_obs2fov::init, obs, usehcr=usehcr, hinode=hinode
@@ -74,6 +74,7 @@ PRO IRIS_obs2fov::docalculations
   obs = self.obs
   obsid=''
   obsdir=''
+  constants = obj_new('IRISsim_constants')
   if ~self.usehcr then begin
     if file_test(obs) then begin
       if file_test(obs, /directory) then begin
@@ -88,20 +89,18 @@ PRO IRIS_obs2fov::docalculations
       dat = extract_fids(obs, fidfound=fidfound)
       if fidfound then begin
         pathdate = strmid(dat,0,4)+'/'+strmid(dat,4,2)+'/'+strmid(dat,6,2)+'/'
-        print,'testing LMSAL: /irisa/data/level2/'+pathdate+obs
-        if file_test('/irisa/data/level2/'+pathdate+obs) then begin
-          obsdir = '/irisa/data/level2/'+pathdate+obs
-        endif else begin
-          print,'testing UIO: /mn/stornext/d10/HDC2/iris/data/level2/'+pathdate+obs
-          if file_test('/mn/stornext/d10/HDC2/iris/data/level2/'+pathdate+obs) then begin
-            obsdir = '/mn/stornext/d10/HDC2/iris/data/level2/'+pathdate+obs
-          endif else begin
+        obsdir = constants->get_data_path_lmsal_l2()+pathdate+obs
+        print,'testing LMSAL: '+obsdir
+        if ~file_test(obsdir) then begin
+          obsdir = constants->get_data_path_uio_l2()+pathdate+obs
+          print,'testing UIO: '+obsdir
+          if ~file_test(obsdir) then begin
             ;self.usehcr=1
             print, 'Cannot find OBS directory'
             self.error=1
             return
-          endelse
-        endelse
+          endif
+        endif
       endif else begin
         print, 'Cannot find OBS directory'
         self.error=1

@@ -1,10 +1,11 @@
-; $Id: iris_gethinode_driver.pro,v 1.10 2016/08/31 17:51:49 mawiesma Exp $  ;
+; $Id: 2024-03-20 14:43 CET $  ;
 
 
 pro iris_gethinode_driver, startdate, stopdate, days=days
 
 ;  gapfile = '/earth/sanhome2/mawiesma/iris/hinode/hinodegap.sav'
 ;  gapfile = '/irisa/data/level2/hinodegap.sav'
+  constants = obj_new('IRISsim_constants')
 
   if N_ELEMENTS(startdate) eq 0 then begin
     t0 = '1-feb-2014T00:00:00'
@@ -36,8 +37,8 @@ pro iris_gethinode_driver, startdate, stopdate, days=days
 
   ;outdir = '~/iris/hinode/nowidget3'
 
-  ;path = '/mn/stornext/d10/HDC2/iris/data/level2/'
-  path = '/irisa/data/level2/'
+  ;path = constants->get_data_path_uio_l2()
+  path = constants->get_data_path_lmsal_l2()
   paths = ssw_time2paths(t0, t1, path)
   help,paths
   dirsep = path_sep()

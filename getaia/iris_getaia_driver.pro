@@ -1,7 +1,9 @@
-; $Id: iris_getaia_driver.pro,v 1.2 2016/03/31 12:54:54 mawiesma Exp $  ;
+; $Id: 2024-03-20 14:43 CET $  ;
 
 
 pro iris_getaia_driver, startdate, stopdate, days=days
+
+  constants = obj_new('IRISsim_constants')
 
   if N_ELEMENTS(startdate) eq 0 then begin
     t0 = '1-feb-2014T00:00:00'
@@ -31,7 +33,7 @@ pro iris_getaia_driver, startdate, stopdate, days=days
     endelse
   endelse
 
-  path = '/irisa/data/level2/'
+  path = constants->get_data_path_lmsal_l2()
   paths = ssw_time2paths(t0, t1, path)
   help,paths
   dirsep = path_sep()

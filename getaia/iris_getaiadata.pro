@@ -20,6 +20,8 @@
 ; INPUTS:
 ;       obs: where obs is the OBS ID of the IRIS OBS. It can be given in 3 different styles:
 ;         1) Just the OBS ID (e.g. '20130829_005500_4203300028')
+;           This option only works if you're either at LMSAL and have access to IRISsim_constants->get_data_path_lmsal_l2()
+;           or if you're at ITA/UIO and have access to IRISsim_constants->get_data_path_uio_l2()
 ;         2) The directory in which the IRIS files reside (e.g. '/mn/xsan/d2/iris/data/level2/2014/01/01/20140101_000431_3840257196/')
 ;         3) The full path of one of the IRIS files, which you can print out from iris_xfiles (e.g. '/mn/xsan/d2/iris/data/level2/2014/01/01/20140101_000431_3840257196/iris_l2_20140101_000431_3840257196_SJI_1400_t000.fits')
 ;
@@ -83,7 +85,7 @@
 ; MODIFICATION HISTORY:
 ;       2015: Martin Wiesmann (ITA, UIO). Gradually developed through the year.
 ;
-; $Id: iris_getaiadata.pro,v 1.26 2016/04/05 10:40:26 mawiesma Exp $  ;
+; $Id: 2024-03-20 14:43 CET $  ;
 
 pro IRIS_getAIAdata_event, event
   widget_control, event.top, get_UValue=info, /No_Copy
@@ -279,6 +281,8 @@ pro IRIS_getAIAdata, obs, usehcr=usehcr, $
   wavesdefault = ['94','131','171','193','211','304','335','1600','1700','4500'] ;;;;;;;;;;;;DEFAULT
   maxframesdefault = 50    ;;;;;;;;;;;;DEFAULT
 
+  constants = obj_new('IRISsim_constants')
+
   t1=systime(1)
 
   obs2fov = obj_new('IRIS_obs2fov', obs, usehcr=usehcr)
@@ -383,7 +387,7 @@ pro IRIS_getAIAdata, obs, usehcr=usehcr, $
     endelse
     
     ;rootl3=getenv('IRIS_DATA')+'/level3' ;is usually not implemented
-    rootl3='/mn/stornext/d10/HDC2/iris/data/level3'
+    rootl3=constants->get_data_path_uio_l3()
     yyyy=strmid(obs2fov->get_obsid(),0,4)
     mm=strmid(obs2fov->get_obsid(),4,2)
     dd=strmid(obs2fov->get_obsid(),6,2)

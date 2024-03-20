@@ -47,7 +47,12 @@ FUNCTION IRISsim_constants::init
   self.SJIhwhm = [20, 20, 2, 2]
   
   self.missingvalue = -32768
-  
+
+  self.data_path_lmsal_l2 = '/irisa/data/level2/'
+  self.data_path_lmsal_l3 = '/irisa/data/level3/'
+  self.data_path_uio_l2 = '/mn/stornext/d10/PRITS/iris/data/level2/'
+  self.data_path_uio_l3 = '/mn/stornext/d10/PRITS/iris/data/level3/'
+
   return, 1
 END
 
@@ -290,6 +295,27 @@ FUNCTION IRISsim_constants::get_missingvalue
 END
 
 
+FUNCTION IRISsim_constants::get_data_path_lmsal_l2
+  return, self.data_path_lmsal_l2
+END
+
+
+FUNCTION IRISsim_constants::get_data_path_lmsal_l3
+  return, self.data_path_lmsal_l3
+END
+
+
+
+FUNCTION IRISsim_constants::get_data_path_uio_l2
+  return, self.data_path_uio_l2
+END
+
+
+FUNCTION IRISsim_constants::get_data_path_uio_l3
+  return, self.data_path_uio_l3
+END
+
+
 PRO IRISsim_constants__define
 
   void = { IRISsim_constants, $
@@ -317,6 +343,11 @@ PRO IRISsim_constants__define
     names : strarr(36), $
     SJIvalues : intarr(4), $
     SJIhwhm : intarr(4), $
-    missingvalue:0 }
+    missingvalue : 0, $
+    data_path_lmsal_l2 : '', $
+    data_path_lmsal_l3 : '', $
+    data_path_uio_l2 : '', $
+    data_path_uio_l3 : '' $
+  }
     
 END

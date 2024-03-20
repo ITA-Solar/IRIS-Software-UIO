@@ -62,7 +62,7 @@
 ;       2014-2016:   Martin Wiesmann, added new features, e.g. showing
 ;                    OBS and corresponding files separately, made it faster
 ;   
-; $Id: 2022-05-12 11:57 CEST $
+; $Id: 2024-03-20 14:43 CET $
 ;-
 
 ; Start Xfiles:
@@ -743,11 +743,12 @@ pro iris_xfiles, dsrc=dsrc, dir=dir
     endif
   endelse
   
+  constants = obj_new('IRISsim_constants')
   if n_elements(spatterns) eq 0 then begin
     names = ['free search', 'LMSAL', 'UIO', 'local']
     paths = ['', $
-      '/irisa/data/level2/', $
-      '/mn/stornext/d10/HDC2/iris/data/level2/', $
+      constants->get_data_path_lmsal_l2(), $
+      constants->get_data_path_uio_l2(), $
       '~']
     usetree = [0, 1, 1, 0]
     searchsubdir = [0, 1, 1, 0]
@@ -757,7 +758,7 @@ pro iris_xfiles, dsrc=dsrc, dir=dir
     if N_ELEMENTS(spatterns.names) gt 2 then begin
       if spatterns.names[2] eq 'archive' then begin
         spatterns.names[2] = 'LMSAL'
-        spatterns.paths[2] = '/irisa/data/level2/'
+        spatterns.paths[2] = constants->get_data_path_lmsal_l2()
         spatterns.usetree[2] = 1
         spatterns.searchsubdir[2] = 1
         spatterns.defaul = 2

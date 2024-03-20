@@ -19,6 +19,8 @@
 ; INPUTS:
 ;       obs: where obs is the OBS ID of the IRIS OBS. It can be given in 3 different styles:
 ;         1) Just the OBS ID (e.g. '20130829_005500_4203300028')
+;           This option only works if you're either at LMSAL and have access to IRISsim_constants->get_data_path_lmsal_l2()
+;           or if you're at ITA/UIO and have access to IRISsim_constants->get_data_path_uio_l2()
 ;         2) The directory in which the IRIS files reside (e.g. '/mn/xsan/d2/iris/data/level2/2014/01/01/20140101_000431_3840257196/')
 ;         3) The full path of one of the IRIS files, which you can print out from iris_xfiles (e.g. '/mn/xsan/d2/iris/data/level2/2014/01/01/20140101_000431_3840257196/iris_l2_20140101_000431_3840257196_SJI_1400_t000.fits')
 ;
@@ -53,7 +55,7 @@
 ; MODIFICATION HISTORY:
 ;       2016-04-22: Martin Wiesmann (ITA, UIO).
 ;
-; $Id: iris_aiacutout2level2.pro,v 1.8 2017/12/08 20:26:46 mawiesma Exp $  ;
+; $Id: 2024-03-20 14:43 CET $  ;
 
 
 pro IRIS_aiacutout2level2, obs, waves=waves, $

@@ -21,7 +21,7 @@
 ; OPTIONAL KEYWORD PARAMETERS:
 ;       startday: the startday to be checked, calculated if not given, stopday-days
 ;       stopday: the stopday to be checked, calculated if not given, startday+days, or current day if startday is not given
-;       path: path to be checked, default is '/irisa/data/level2/' if /lmsal is set, or '/mn/xsan/d2/iris/data/level2/' if /lmsal is not set
+;       path: path to be checked, default is IRISsim_constants->get_data_path_lmsal_l2() if /lmsal is set, or IRISsim_constants->get_data_path_uio_l2() if /lmsal is not set
 ;       filter: default is *.errorlog, doesn't need to be changed
 ;       maxline: maximum number of lines per errorlog written into log and on command line, default is 33
 ;       lmsal: set to 1 if this tool is run at LMSAL and path and/or logdestination or not set,
@@ -45,17 +45,19 @@
 ; MODIFICATION HISTORY:
 ;       5-Nov-2013: Martin Wiesmann (ITA, UIO).
 ;
-; $Id: iris_get_missingl2.pro,v 1.28 2015/11/03 14:05:38 mawiesma Exp $
+; $Id: 2024-03-20 14:43 CET $
 
 
 
 pro IRIS_get_missingl2, days, logdestination=logdestination, startday=startday, stopday=stopday, files=files, $
   lmsal=lmsal, path=path, filter=filter, maxline=maxline
   
+  constants = obj_new('IRISsim_constants')
+
   if N_PARAMS() eq 0 then days=30
   if ~keyword_set(path) then $
-    if keyword_set(lmsal) then path='/irisa/data/level2/' $
-    else path='/mn/stornext/d10/HDC2/iris/data/level2/'
+    if keyword_set(lmsal) then path=constants->get_data_path_lmsal_l2() $
+    else path=constants->get_data_path_uio_l2()
   if ~keyword_set(logdestination) then $
     if keyword_set(lmsal) then logdestination='/sanhome2/mawiesma/iris/missingl2logs/' $
     else logdestination='~/iris/missingl2logs/'
