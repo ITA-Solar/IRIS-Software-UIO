@@ -1,4 +1,4 @@
-; $Id: iris_l1to2aia.pro,v 1.54 2018/05/18 09:55:23 mawiesma Exp $  ;
+; $Id: 2024-04-10 13:59 CEST $  ;
 
 pro iris_l1to2aia, aiadir, obs2fov, waves=waves, $
   deletetempfiles=deletetempfiles, method=method, aiafilesl1=aiafilesl1, nfilesl1=nfilesl1, $
@@ -135,6 +135,11 @@ pro iris_l1to2aia, aiadir, obs2fov, waves=waves, $
         case method of
           0: begin
             read_sdo, aiafiles[ifile], hdr, dataone, /use_shared, /noshell, /uncomp_delete
+            if waves[iwave] eq 'blos' || waves[iwave] eq 'cont' then begin
+              hmi_prep, hdr, dataone, hdr_prep, data_prep, /use_ref
+              hdr = hdr_prep
+              dataone = data_prep
+            endif
             sizedata = size(dataone)
           end
           1: begin
@@ -430,9 +435,11 @@ pro iris_l1to2aia, aiadir, obs2fov, waves=waves, $
       statistics = iris_cube_statistics(aiacube)
       
       ;convert to integers
-      ind = where(aiacube ne aiacube, count)
-      if count gt 0 then aiacube[ind] = -200
-      aiacube = fix(round(aiacube))
+      if waves[iwave] eq 'blos' || waves[iwave] eq 'cont' then begin
+        ind = where(aiacube ne aiacube, count)
+        if count gt 0 then aiacube[ind] = -200
+        aiacube = fix(round(aiacube))
+      endif
 
       ;stop
 
