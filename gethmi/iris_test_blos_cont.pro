@@ -5,11 +5,14 @@ pro iris_test_blos_cont
   jobid='ssw_service_230321_081413_24541_ssmq_blos_cont_test_nodl'
   waves = ['blos','cont']
 
+
   IF 0 THEN BEGIN
     ;run this part only once
     ssw_service_get_data,jobid,out_dir=outdir,/loud
   ENDIF
 
+  fovexpanddefault = 100.0 ;arcseconds ;;;;;;;;;;;;;;;;;DEFAULT
+  timeexpanddefault = 10.0 ;minutes ;;;;;;;;;;;;;;;;;DEFAULT
   maxframesdefault = 50    ;;;;;;;;;;;;DEFAULT
   maxframes = maxframesdefault
 
@@ -18,6 +21,10 @@ pro iris_test_blos_cont
     print, 'Invalid OBS'
     return
   endif
+  if N_ELEMENTS(fovexpand) eq 0 then obs2fov->set_fovexpand, fovexpanddefault $
+  else obs2fov->set_fovexpand, fovexpand
+  if N_ELEMENTS(timeexpand) eq 0 then obs2fov->set_timeexpand, timeexpanddefault $
+  else obs2fov->set_timeexpand, timeexpand
 
 
   obs2fov->get_startendtimes, starttime, endtime
