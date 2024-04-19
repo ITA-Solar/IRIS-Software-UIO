@@ -1,4 +1,4 @@
-; $Id: 2024-04-10 13:59 CEST $  ;
+; $Id: 2024-04-19 14:08 CEST $  ;
 
 pro iris_l1to2aia, aiadir, obs2fov, waves=waves, $
   deletetempfiles=deletetempfiles, method=method, aiafilesl1=aiafilesl1, nfilesl1=nfilesl1, $
@@ -135,11 +135,11 @@ pro iris_l1to2aia, aiadir, obs2fov, waves=waves, $
         case method of
           0: begin
             read_sdo, aiafiles[ifile], hdr, dataone, /use_shared, /noshell, /uncomp_delete
-            if waves[iwave] eq 'blos' || waves[iwave] eq 'cont' then begin
-              hmi_prep, hdr, dataone, hdr_prep, data_prep, /use_ref
-              hdr = hdr_prep
-              dataone = data_prep
-            endif
+;            if waves[iwave] eq 'blos' || waves[iwave] eq 'cont' then begin
+;              hmi_prep, hdr, dataone, hdr_prep, data_prep, /use_ref
+;              hdr = hdr_prep
+;              dataone = data_prep
+;            endif
             sizedata = size(dataone)
           end
           1: begin
@@ -435,11 +435,23 @@ pro iris_l1to2aia, aiadir, obs2fov, waves=waves, $
       statistics = iris_cube_statistics(aiacube)
       
       ;convert to integers
-      if waves[iwave] eq 'blos' || waves[iwave] eq 'cont' then begin
-        ind = where(aiacube ne aiacube, count)
-        if count gt 0 then aiacube[ind] = -200
+      if waves[iwave] ne 'cont' then begin
+        missing = where(finite(aiacube) eq 0, cmissing)
+        missing_value = -32768
+        if waves[iwave] eq 'blos'then begin
+          aiacube = (-8190) > aiacube < (8190)
+          aiacube = aiacube*4
+          bscales=0.25
+        endif else begin
+          bscales=1.0
+        endelse
         aiacube = fix(round(aiacube))
-      endif
+        if cmissing gt 0 then aiacube[missing] = missing_value
+        ;          if csaturated gt 0 then (*data[i])[saturated] = 32764
+        bzeros=0.0
+      endif else begin
+        bscales = !NULL
+      endelse
 
       ;stop
 
@@ -488,8 +500,11 @@ pro iris_l1to2aia, aiadir, obs2fov, waves=waves, $
       if required_tags(hdrall, /BUNIT) then BUNIT=IRISl12_mostcommonvalue(hdrall.BUNIT) $
       else BUNIT=''
       sxaddpar, mainheader, 'BUNIT', BUNIT;OBSvars.bunit
-      sxaddpar, mainheader, 'BSCALE', 1.0, format="f4.2";, ' True_value = BZERO + BSCALE*Array_value', after='BZERO'
-      sxaddpar, mainheader, 'BZERO', 0;, ' True_value = BZERO + BSCALE*Array_value', after='BTYPE'
+      IF N_ELEMENTS(bscales) GT 0 THEN BEGIN
+        sxaddpar, mainheader, 'BSCALE', bscales, format="f4.2";, ' True_value = BZERO + BSCALE*Array_value', after='BZERO'
+        sxaddpar, mainheader, 'BZERO', bzeros;, ' True_value = BZERO + BSCALE*Array_value', after='BTYPE'
+        sxaddpar, mainheader, 'BLANK', missing_value, ' Value of missing pixels (integer HDU)'
+      ENDIF
       sxaddpar, mainheader, 'HLZ', '';OBSvars.HLZ
       sxaddpar, mainheader, 'SAA', '';OBSvars.SAA
       sxaddpar, mainheader, 'SAT_ROT',  obs2fov->get_satrot();mean(hdrall.crota2);OBSvars.SAT_ROT
