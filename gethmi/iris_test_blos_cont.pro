@@ -17,7 +17,7 @@ pro iris_test_blos_cont
   waves = ['blos','cont']
 
 
-  IF 1 THEN BEGIN
+  IF 0 THEN BEGIN
     ;run this part only once
     ssw_service_get_data,jobid,out_dir=outdir,/loud
   ENDIF

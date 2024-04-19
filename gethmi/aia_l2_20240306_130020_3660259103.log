@@ -1,6 +1,6 @@
 Log of AIA2IRIS, proc version: 8
 l1to2aia version: A2I-2018-05-18
-Date            : 2024-04-19T09:53:18.809
+Date            : 2024-04-19T12:10:19.143
 SSW_JobID       : ssw_service_240312_081123_1737_ssmq_blos_cont_TEST_1p5
 OBS ID             : 20240306_130020_3660259103
 OBS Start          : 2024-03-06T13:00:20.115
@@ -13,17 +13,17 @@ source of rollangle: fitshead2wcs
 recieved files     :     100
 bad files          :       2 ( 2.0%)
 created files      :       2
-memory used        :  231 MB
-time used          : 32.1 s
+memory used        :  230 MB
+time used          : 29.8 s
 ======================================================================================================================================
 preparation        :  0.0 s   ( 0.0%)
 request            :  0.0 s   ( 0.0%)
 wait for data      :  0.0 s   ( 0.0%)
 download data      :  0.0 s   ( 0.0%)
-level 1 to 2       : 32.1 s   (100.%)
-reading/aia_prep   :  7.9 s   (24.6%)
+level 1 to 2       : 29.8 s   (100.%)
+reading/aia_prep   :  6.2 s   (20.7%)
 writing            :  0.1 s   ( 0.2%)
-rest of l1to2      : 24.2 s   (75.2%)
+rest of l1to2      : 23.6 s   (79.1%)
 ======================================================================================================================================
 files with bad quality values (i.e. ForbiddenBits=[0,1,3,4,7,12,13,14,15,16,17,18,20,21,31];if any of these bits is set - reject the image)
    quality | file
