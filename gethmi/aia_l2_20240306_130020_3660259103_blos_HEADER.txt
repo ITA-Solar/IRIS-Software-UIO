@@ -1,0 +1,139 @@
+SIMPLE  =                    T / Written by IDL:  Fri Apr 19 11:53:34 2024
+BITPIX  =                   16 / Number of bits per data pixel
+NAXIS   =                    3 / Number of data axes
+NAXIS1  =                  369 /
+NAXIS2  =                  383 /
+NAXIS3  =                   50 /
+EXTEND  =                    T / FITS data may contain extensions
+DATE    = '2024-04-19'         / Creation UTC (CCCC-MM-DD) date of FITS header
+COMMENT FITS (Flexible Image Transport System) format is defined in 'Astronomy
+COMMENT and Astrophysics', volume 376, page 359; bibcode 2001A&A...376..359H
+TELESCOP= 'SDO     '           /
+INSTRUME= 'HMI_FRONT2'         /
+DATA_LEV=              2.00000 /
+LVL_NUM =              2.00000 /
+VER_RF2 = 'A2I-2018-05-18'     /
+DATE_RF2= '2024-04-19T09:53:18.817' /
+DATA_SRC=              0.00000 /
+ORIGIN  = 'SDO     '           /
+BLD_VERS= '-905    '           /
+LUTID   =                    0 /
+OBSID   = '20240306_130020_3660259103' /
+OBS_DESC= '        '           /
+OBSLABEL= '        '           /
+OBSTITLE= '        '           /
+DATE_OBS= '2024-03-06T12:49:56.600' /
+DATE_END= '2024-03-06T15:58:11.600' /
+STARTOBS= '2024-03-06T13:00:20.115' /
+ENDOBS  = '2024-03-06T15:49:53.142' /
+OBSREP  =                    1 /
+CAMERA  =                    2 /
+STATUS  = '        '           /
+BTYPE   = '        '           /
+BUNIT   = 'Gauss   '           /
+BSCALE  =                 1.00 /
+BZERO   =                    0 /
+HLZ     = '        '           /
+SAA     = '        '           /
+SAT_ROT =         -7.16963E-05 /
+DSUN_OBS=        148425373159. /
+TR_MODE = '        '           /
+FOVY    =        329.800009192 /
+FOVX    =        321.400008856 /
+XCEN    =             -275.586 /
+YCEN    =             -98.5123 /
+SUMSPTRL=                    1 /
+SUMSPAT =                    1 /
+EXPTIME =        0.00000000000 /
+EXPMIN  =        0.00000000000 /
+EXPMAX  =        0.00000000000 /
+DATAMEAN=             -2.28938 /
+DATARMS =              15.8862 /
+DATAMEDN=            -0.277289 /
+DATAMIN =             -178.297 /
+DATAMAX =              156.177 /
+DATAVALS=              6925023 /
+MISSVALS=                    0 /
+NSATPIX =                    0 /
+NSPIKES =                    0 /
+TOTVALS =              6925023 /
+PERCENTD=              100.000 /
+DATASKEW=             -1.61680 /
+DATAKURT=              23.2160 /
+DATAP01 =             -67.9684 /
+DATAP10 =             -10.8497 /
+DATAP25 =             -1.72029 /
+DATAP75 =             0.540308 /
+DATAP90 =              2.33089 /
+DATAP95 =              8.83267 /
+DATAP98 =              27.2228 /
+DATAP99 =              44.6004 /
+NEXP    =                   50 /
+MISSRAS =                    0 /
+PC1_1   =             0.999936 /
+PC1_2   =            0.0112733 /
+PC2_1   =           -0.0112733 /
+PC2_2   =             0.999936 /
+PC3_1   =              0.00000 /
+PC3_2   =              0.00000 /
+NWIN    =                    1 /
+TDET1   = 'SJI     '           /
+TDESC1  = '        '           /
+TWAVE1  =        6173.00000000 /
+TDMEAN1 =             -2.28938 /
+TDRMS1  =              15.8862 /
+TDMEDN1 =            -0.277289 /
+TDMIN1  =             -178.297 /
+TDMAX1  =              156.177 /
+TDVALS1 =              6925023 /
+TMISSV1 =                    0 /
+TSATPX1 =                    0 /
+TSPIKE1 =                    0 /
+TTOTV1  =              6925023 /
+TPCTD1  =              100.000 /
+TDSKEW1 =             -1.61680 /
+TDKURT1 =              23.2160 /
+TDP01_1 =             -67.9684 /
+TDP10_1 =             -10.8497 /
+TDP25_1 =             -1.72029 /
+TDP75_1 =             0.540308 /
+TDP90_1 =              2.33089 /
+TDP95_1 =              8.83267 /
+TDP98_1 =              27.2228 /
+TDP99_1 =              44.6004 /
+TSR1    =                    1 /
+TER1    =                  383 /
+TSC1    =                    1 /
+TEC1    =                  369 /
+CDELT1  =       0.600000024000 /
+CDELT2  =       0.600000024000 /
+CDELT3  =        230.510204082 /
+CRPIX1  =              185.500 /
+CRPIX2  =              192.500 /
+CRPIX3  =              26.0000 /
+CRVAL1  =             -275.586 /
+CRVAL2  =             -98.5123 /
+CRVAL3  =        5136.48500000 /
+CTYPE1  = 'HPLN-TAN'           /
+CTYPE2  = 'HPLT-TAN'           /
+CTYPE3  = 'Time    '           /
+CUNIT1  = 'arcsec  '           /
+CUNIT2  = 'arcsec  '           /
+CUNIT3  = 'seconds '           /
+KEYWDDOC= '        '           /
+HISTORY Polynomial Coefficients used for Doppler velocity correction: 2.211395e+
+HISTORY 02 -1.276152e-03 -1.387950e-05 -5.798749e-10
+HISTORY FITSHEAD2STRUCT run at: Wed Mar 27 13:00:31 2024
+HISTORY read_sdo VERSION:  2.10
+HISTORY ssw_track_fov_pix_cen VERSION:  1.00
+HISTORY ssw_service_track_fov VERSION:  2.10
+HISTORY ssw_service_track_fov  jobid: ssw_service_240312_081123_1737_ssmq_blos_c
+HISTORY ssw_service_track_fov  ref_info: @2024/03/06 14:25:06.500
+HISTORY ssw_service_track_fov  xll,xyy,nx,ny: 1341,1647,495,472
+HISTORY ssw_service_track_fov  fovx,fovy: 297.000,283.000
+HISTORY ssw_service_track_fov  Orig CRPIX1&2: 2048.50,2048.50
+HISTORY FITSHEAD2STRUCT run at: Fri Apr 19 11:53:18 2024
+HISTORY read_sdo VERSION:  2.10
+HISTORY hmi_prep VERSION:  4.14
+HISTORY IRIS-AIA RF2
+END
