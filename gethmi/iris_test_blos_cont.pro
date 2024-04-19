@@ -1,12 +1,23 @@
 pro iris_test_blos_cont
 
-  obs = '20230315_044803_3660259102'
-  outdir='/Users/mawiesma/data/test/blos/'
-  jobid='ssw_service_230321_081413_24541_ssmq_blos_cont_test_nodl'
+  test = 2
+
+  case test of
+    1: begin
+      obs = '20230315_044803_3660259102'
+      outdir='/Users/mawiesma/data/test/blos/'
+      jobid='ssw_service_230321_081413_24541_ssmq_blos_cont_test_nodl'
+    end
+    2: begin
+      obs = '20240306_130020_3660259103'
+      outdir='/Users/mawiesma/data/test/blos_2/'
+      jobid='ssw_service_240312_081123_1737_ssmq_blos_cont_TEST_1p5'
+    end
+  endcase
   waves = ['blos','cont']
 
 
-  IF 0 THEN BEGIN
+  IF 1 THEN BEGIN
     ;run this part only once
     ssw_service_get_data,jobid,out_dir=outdir,/loud
   ENDIF
