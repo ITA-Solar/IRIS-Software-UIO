@@ -325,10 +325,10 @@ PRO IRISl12_saveSpectralData, hdr, files, hdrmap, rasters, filename, OBSvars, l1
           datap99:0.0}
         statistics = make_array(OBSvars.nregFUV+OBSvars.nregNUV+1, value=statisticstemp)
         
-        fuvfilecounter=0
-        fgroup=-1
-        nuvfilecounter=0
-        ngroup=-1
+        fuvfilecounter=0l
+        fgroup=-1l
+        nuvfilecounter=0l
+        ngroup=-1l
         for step=0,rasters[rastertypenr].nSteps-1 do begin ;loop over all steps within a raster
           FUVlogind = (*(rasters[rastertypenr]).FUVlogind)[step, rasternr]
           if FUVlogind ge 0 then begin

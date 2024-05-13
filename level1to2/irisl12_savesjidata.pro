@@ -192,8 +192,8 @@ endif
 
 
       if OBSvars.SJIok_rtype[0] then begin
-        sjifilecounter=0
-        sgroup=-1
+        sjifilecounter=0l
+        sgroup=-1l
         for step=0,nsteps-1 do begin
           if SJIloginds[step] ge 0 then begin
             SJIfileind = hdrmap[SJIloginds[step]]
