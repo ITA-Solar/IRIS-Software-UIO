@@ -1474,7 +1474,7 @@ end
 function iris_data::ti2utc,ti,time_only=time_only,date_only=date_only
 ; returns time in UTC of each exposure, /time_only and /date_only options
   if n_elements(ti) eq 0 then ti=self->gettime()
-  return,anytim2utc(self->ti2tai(ti),time_only=time_only,date_only=date_only,/ccsds,/truncate)
+  return,anytim2utc(self->ti2tai(ti),time_only=time_only,date_only=date_only,/ccsds)
 end
 
 function iris_data::gettime,iwin,indx

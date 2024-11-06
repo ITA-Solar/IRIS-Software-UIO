@@ -476,7 +476,7 @@ end
 
 function iris_sji::ti2utc,ti,time_only=time_only
   if n_elements(ti) eq 0 then ti=self->gettime()
-  return,anytim2utc(self->ti2tai(ti),time_only=time_only,/ccsds,/truncate)
+  return,anytim2utc(self->ti2tai(ti),time_only=time_only,/ccsds)
 end
 
 function iris_sji::getexp,iexp,iwin=iwin
