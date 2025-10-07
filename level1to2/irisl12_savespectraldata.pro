@@ -312,7 +312,7 @@ PRO IRISl12_saveSpectralData, hdr, files, hdrmap, rasters, filename, OBSvars, l1
           stdev:0.0, $
           min:0.0, $
           max:0.0, $
-          vals:0UL, $
+          vals:0ULL, $
           kurtosis:0.0, $
           skewness:0.0, $
           datap01:0.0, $
@@ -840,7 +840,7 @@ PRO IRISl12_saveSpectralData, hdr, files, hdrmap, rasters, filename, OBSvars, l1
         
         ;do statistics of all windows combined
         ts1=systime(1)
-        if total(statistics[1:*].vals) gt 0 then begin
+        if total(statistics[1:*].vals, /preserve_type) gt 0 then begin
           maxelements=100000
           seed=0
           for region=1,N_ELEMENTS(statistics)-1 do begin
@@ -930,8 +930,8 @@ PRO IRISl12_saveSpectralData, hdr, files, hdrmap, rasters, filename, OBSvars, l1
         
         
         ;scale the data to a signed integer if desired
-        cmissingall = ulonarr(N_ELEMENTS(data))
-        csaturatedall = ulonarr(N_ELEMENTS(data))
+        cmissingall = ulon64arr(N_ELEMENTS(data))
+        csaturatedall = ulon64arr(N_ELEMENTS(data))
         for i=0,N_ELEMENTS(data)-1 do begin
           missing = where(finite(*data[i]) eq 0, cmissing)
           cmissingall[i] = cmissing
@@ -1024,11 +1024,14 @@ PRO IRISl12_saveSpectralData, hdr, files, hdrmap, rasters, filename, OBSvars, l1
         sxaddpar, mainheader, 'DATAMIN', statistics[0].min
         sxaddpar, mainheader, 'DATAMAX', statistics[0].max
         sxaddpar, mainheader, 'DATAVALS', statistics[0].vals
-        sxaddpar, mainheader, 'MISSVALS', total(cmissingall,/preserve_type)
-        sxaddpar, mainheader, 'NSATPIX', total(csaturatedall,/preserve_type)
+        MISSVALS = total(cmissingall, /preserve_type)
+        sxaddpar, mainheader, 'MISSVALS', MISSVALS
+        NSATPIX = total(csaturatedall, /preserve_type)
+        sxaddpar, mainheader, 'NSATPIX', NSATPIX
         sxaddpar, mainheader, 'NSPIKES', 0
-        sxaddpar, mainheader, 'TOTVALS', statistics[0].vals+total(cmissingall,/preserve_type)+total(csaturatedall,/preserve_type)+0
-        sxaddpar, mainheader, 'PERCENTD', float(statistics[0].vals) / (statistics[0].vals+total(cmissingall)+total(csaturatedall)+0) *100
+        TOTVALS = statistics[0].vals + MISSVALS + NSATPIX + 0
+        sxaddpar, mainheader, 'TOTVALS', TOTVALS
+        sxaddpar, mainheader, 'PERCENTD', float(statistics[0].vals) / TOTVALS * 100
         sxaddpar, mainheader, 'DATASKEW', statistics[0].skewness
         sxaddpar, mainheader, 'DATAKURT', statistics[0].kurtosis
         sxaddpar, mainheader, 'DATAP01', statistics[0].datap01

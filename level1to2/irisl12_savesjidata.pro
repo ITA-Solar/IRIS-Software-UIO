@@ -80,7 +80,7 @@ endif
         stdev:0.0, $
         min:0.0, $
         max:0.0, $
-        vals:0UL, $
+        vals:0ULL, $
         kurtosis:0.0, $
         skewness:0.0, $
         datap01:0.0, $
@@ -626,8 +626,9 @@ endif
       sxaddpar, mainheader, 'MISSVALS', cmissing
       sxaddpar, mainheader, 'NSATPIX', csaturated
       sxaddpar, mainheader, 'NSPIKES', 0
-      sxaddpar, mainheader, 'TOTVALS', statistics.vals+cmissing+csaturated+0
-      sxaddpar, mainheader, 'PERCENTD', float(statistics.vals) / (statistics.vals+cmissing+csaturated+0) *100
+      TOTVALS = statistics.vals + cmissing + csaturated + 0
+      sxaddpar, mainheader, 'TOTVALS', TOTVALS
+      sxaddpar, mainheader, 'PERCENTD', float(statistics.vals) / TOTVALS * 100
       sxaddpar, mainheader, 'DATASKEW', statistics.skewness
       sxaddpar, mainheader, 'DATAKURT', statistics.kurtosis
       sxaddpar, mainheader, 'DATAP01', statistics.datap01
