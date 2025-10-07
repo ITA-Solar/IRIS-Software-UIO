@@ -4,9 +4,10 @@
 ;fix to the Martin CVS repo->SSW online workflow which has multiple
 ;snags.  
 
+; $Id: 2025-10-07 13:35 CEST $
+
 PRO IRISl12_saveSJIData, hdr, files, hdrmap, rastersSJI, filename, OBSvars, l1to2log, _extra=_extra $
   , timemeas=timemeas, scaled=scaled, preserveNAN=preserveNAN, preserveINF=preserveINF, l1p5=l1p5, maxl1files=maxl1files, rollangle=rollangle
-  ; $Id: irisl12_savesjidata.pro,v 1.100 2018/03/23 10:06:33 mawiesma Exp $  ;
 
   constants = obj_new('IRISsim_constants')
 

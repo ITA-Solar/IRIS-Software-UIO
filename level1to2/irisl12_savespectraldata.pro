@@ -1,6 +1,7 @@
+; $Id: 2025-10-07 13:35 CEST $
+
 PRO IRISl12_saveSpectralData, hdr, files, hdrmap, rasters, filename, OBSvars, l1to2log, _extra=_extra $
     , timemeas=timemeas, scaled=scaled, l1p5=l1p5, maxl1files=maxl1files, rollangle=rollangle
-  ; $Id: irisl12_savespectraldata.pro,v 1.119 2018/03/23 10:06:33 mawiesma Exp $  ;
     
   constants = obj_new('IRISsim_constants')
   

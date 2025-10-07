@@ -12,7 +12,7 @@ martin.wiesmann@astro.uio.no
 
 This repository includes a pre-commit git hook, that updates a specific line of each modified file with the current date and time. The line with this format will be edited:
 ```
-; $Id: 2021-08-12 21:10 CEST $
+; $Id: 2025-10-07 13:35 CEST $
 ```
 If the file you modified, does not contain this line yet, please add it, preferably append it to the procedure description at the beginning of the file. 
 
@@ -20,6 +20,5 @@ To make git aware of this hook, run this command after cloning the repository:
 ```
 cd path_of_repository
 git config --local core.hooksPath .githooks/
-chmod +x .githooks/*
 ```
 Git will then run the script _./githooks/pre-commit_ every time you commit something. This script will check each modified and staged file whether there is a line with the above format, and if yes, updates date and time and adds these changes to the commit.
